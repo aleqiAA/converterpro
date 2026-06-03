@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Build Your CV — ConverterPro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #0F6E56; --green-pale: #E8F5F0;
+      --text: #1A1A2E; --muted: #6B7280; --border: #E5E7EB;
+    }
+    body { font-family: 'Inter', sans-serif; background: #f9fafb; padding: 2rem 1rem; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 2rem; }
+    h1 { font-size: 2rem; font-weight: 800; color: var(--text); margin-bottom: 0.5rem; }
+    .form-card {
+      background: white; border-radius: 12px; padding: 2rem;
+      margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .section-title {
+      font-size: 1.3rem; font-weight: 700; color: var(--text);
+      margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--green);
+    }
+    .form-group { margin-bottom: 1.5rem; }
+    label { display: block; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+    input, textarea, select {
+      width: 100%; padding: 0.75rem; border: 2px solid var(--border);
+      border-radius: 8px; font-size: 1rem; font-family: 'Inter', sans-serif;
+    }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--green); }
+    textarea { min-height: 100px; resize: vertical; }
+    .btn {
+      padding: 1rem 2rem; background: var(--green); color: white; border: none;
+      border-radius: 8px; font-size: 1.1rem; font-weight: 700; cursor: pointer; width: 100%;
+    }
+    .btn:hover { background: #0A4F3D; }
+    .errors { background: #FEE; color: #C00; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .pricing-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 3rem; }
+    .pricing-card {
+      background: white; border: 3px solid var(--border); border-radius: 16px;
+      padding: 2rem; text-align: center; transition: all 0.3s; cursor: pointer; position: relative;
+    }
+    .pricing-card:hover { transform: translateY(-5px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    .pricing-card.selected { border-color: var(--green); box-shadow: 0 8px 32px rgba(15,110,86,0.2); }
+    .pricing-card .badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--muted); color: white; padding: 4px 16px;
+      border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    }
+    .pricing-card .badge.popular { background: #FFA500; }
+    .pricing-card h2 { font-size: 1.5rem; margin: 1rem 0 0.5rem 0; color: var(--text); }
+    .pricing-card .price { font-size: 2.5rem; font-weight: 800; color: var(--green); margin: 1rem 0; }
+    .premium-card .price { color: #FFA500; }
+    .pricing-card .features { list-style: none; padding: 0; margin: 1.5rem 0; text-align: left; }
+    .pricing-card .features li { padding: 0.5rem 0; font-size: 0.9rem; color: var(--text); }
+    .select-btn {
+      width: 100%; padding: 0.75rem; background: var(--green); color: white;
+      border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    }
+    .premium-card .select-btn { background: #FFA500; }
+    .select-btn:hover { transform: scale(1.05); }
+    .ad-container {
+      background: #f9f9f9; border: 1px solid var(--border); border-radius: 8px;
+      padding: 1rem; margin: 2rem 0; text-align: center; min-height: 100px;
+    }
+    .ad-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+    .upgrade-prompt {
+      background: linear-gradient(135deg, #FFA500 0%, #FF8C00 100%);
+      color: white; padding: 2rem; border-radius: 12px; text-align: center; margin: 2rem 0;
+    }
+    .upgrade-prompt h3 { margin-bottom: 1rem; font-size: 1.5rem; }
+    .upgrade-prompt p { margin-bottom: 1.5rem; opacity: 0.95; }
+
+    /* Resume upload card */
+    .upload-card {
+      background: white; border: 2px dashed var(--green); border-radius: 12px;
+      padding: 2rem; margin-bottom: 1.5rem; text-align: center;
+      background: linear-gradient(135deg, #f0faf6 0%, #fff 100%);
+    }
+    .upload-card h2 { color: var(--green); margin-bottom: 0.5rem; font-size: 1.2rem; }
+    .upload-card p { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.25rem; }
+    .upload-btn {
+      display: inline-block; padding: 0.75rem 1.75rem; background: var(--green);
+      color: white; border: none; border-radius: 8px; font-weight: 700;
+      cursor: pointer; font-size: 0.95rem; transition: all 0.2s;
+    }
+    .upload-btn:hover { background: #0A4F3D; }
+    #parseStatus { display: block; margin-top: 0.75rem; font-size: 0.9rem; color: var(--muted); min-height: 1.2em; }
+
+    /* AI enhance */
+    .ai-enhance-btn {
+      width: 100%; padding: 0.9rem; margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white; border: none; border-radius: 8px;
+      font-weight: 700; cursor: pointer; font-size: 0.95rem; transition: all 0.2s;
+    }
+    .ai-enhance-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .ai-enhance-btn:disabled { background: var(--border); cursor: not-allowed; transform: none; }
+    .ai-note { font-size: 0.75rem; color: var(--muted); text-align: center; margin-bottom: 1rem; }
+
+    @media (max-width: 600px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .pricing-cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Build Your Professional CV</h1>
+      <p style="color: var(--muted);">Choose your plan and fill in your details</p>
+    </div>
+
+    <!-- Pricing Tier Selection -->
+    <div class="pricing-cards">
+      <div class="pricing-card free-card" id="freeCard">
+        <div class="badge">FREE</div>
+        <h2>Basic CV</h2>
+        <div class="price">KES 0</div>
+        <ul class="features">
+          <li>✓ 1 Template (Classic)</li>
+          <li>✓ Standard Quality PDF</li>
+          <li>✓ Instant Download</li>
+          <li>⚠ Small Watermark</li>
+          <li>⚠ Ads Displayed</li>
+        </ul>
+        <button type="button" class="select-btn" onclick="selectTier('free')">Select Free</button>
+      </div>
+      <div class="pricing-card premium-card" id="premiumCard">
+        <div class="badge popular">MOST POPULAR</div>
+        <h2>Premium CV</h2>
+        <div class="price">KES 50</div>
+        <ul class="features">
+          <li>✓ All 6 Templates</li>
+          <li>✓ High Quality PDF</li>
+          <li>✓ NO Watermark</li>
+          <li>✓ NO Ads</li>
+          <li>✓ Re-download (24hrs)</li>
+          <li>✓ AI Enhancement</li>
+          <li>✓ QR Code on CV</li>
+        </ul>
+        <button type="button" class="select-btn" onclick="selectTier('premium')">Select Premium</button>
+      </div>
+    </div>
+
+    <!-- AdSense -->
+    <div class="ad-container">
+      <div class="ad-label">Advertisement</div>
+      <ins class="adsbygoogle" style="display:block"
+           data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+           data-ad-slot="XXXXXXXXXX"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+
+    {% if errors %}
+    <div class="errors">
+      <strong>Please fix the following errors:</strong>
+      <ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    <!-- Resume Upload / Auto-fill -->
+    <div class="upload-card" id="uploadCard" style="display:none;">
+      <h2>⚡ Quick Start — Upload Existing CV</h2>
+      <p>Upload your old CV (PDF, DOCX, or TXT) and we'll auto-fill the form for you. Free, instant.</p>
+      <input type="file" id="resumeUpload" accept=".pdf,.docx,.txt"
+             style="display:none" onchange="parseResume(this)">
+      <button type="button" class="upload-btn"
+              onclick="document.getElementById('resumeUpload').click()">
+        📎 Upload CV to Auto-Fill
+      </button>
+      <span id="parseStatus"></span>
+    </div>
+
+    <form method="POST" id="cvForm" style="display:none;">
+      <input type="hidden" name="tier" id="tierInput" value="free">
+
+      <!-- AdSense inside form (free only) -->
+      <div class="ad-container" id="formAd" style="display:none;">
+        <div class="ad-label">Advertisement</div>
+        <ins class="adsbygoogle" style="display:block"
+             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+             data-ad-slot="XXXXXXXXXX"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+      </div>
+
+      <!-- Personal Info -->
+      <div class="form-card">
+        <h2 class="section-title">Personal Information</h2>
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" name="name" id="field_name" value="{{ form.get('name', '') }}" required>
+        </div>
+        <div class="form-group">
+          <label>Professional Title *</label>
+          <input type="text" name="title" id="field_title" value="{{ form.get('title', '') }}" placeholder="e.g. Software Engineer" required>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Email *</label>
+            <input type="email" name="email" id="field_email" value="{{ form.get('email', '') }}" required>
+          </div>
+          <div class="form-group">
+            <label>Phone *</label>
+            <input type="tel" name="phone" id="field_phone" value="{{ form.get('phone', '') }}" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>City *</label>
+          <input type="text" name="location" id="field_location" value="{{ form.get('location', '') }}" placeholder="e.g. Nairobi" required>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>LinkedIn (optional)</label>
+            <input type="url" name="linkedin" id="field_linkedin" value="{{ form.get('linkedin', '') }}">
+          </div>
+          <div class="form-group">
+            <label>Website (optional)</label>
+            <input type="url" name="website" id="field_website" value="{{ form.get('website', '') }}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Professional Summary</label>
+          <textarea name="summary" id="field_summary">{{ form.get('summary', '') }}</textarea>
+        </div>
+      </div>
+
+      <!-- Work Experience -->
+      <div class="form-card">
+        <h2 class="section-title">Work Experience</h2>
+        {% for i in range(1, 4) %}
+        <div style="margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--border);">
+          <h3 style="margin-bottom:1rem;color:var(--muted);">Position {{ i }}</h3>
+          <div class="form-group">
+            <label>Job Title {% if i == 1 %}*{% endif %}</label>
+            <input type="text" name="job_title_{{ i }}"
+                   value="{{ form.get('job_title_' ~ i, '') }}" {% if i == 1 %}required{% endif %}>
+          </div>
+          <div class="form-group">
+            <label>Company {% if i == 1 %}*{% endif %}</label>
+            <input type="text" name="company_{{ i }}"
+                   value="{{ form.get('company_' ~ i, '') }}" {% if i == 1 %}required{% endif %}>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Start Date</label>
+              <input type="text" name="start_{{ i }}" value="{{ form.get('start_' ~ i, '') }}" placeholder="Jan 2020">
+            </div>
+            <div class="form-group">
+              <label>End Date</label>
+              <input type="text" name="end_{{ i }}" value="{{ form.get('end_' ~ i, '') }}" placeholder="Dec 2022">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" name="current_{{ i }}"
+                     {% if form.get('current_' ~ i) %}checked{% endif %}> Currently working here
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Key Responsibilities</label>
+            <textarea name="responsibilities_{{ i }}" id="resp_{{ i }}">{{ form.get('responsibilities_' ~ i, '') }}</textarea>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Education -->
+      <div class="form-card">
+        <h2 class="section-title">Education</h2>
+        {% for i in range(1, 3) %}
+        <div style="margin-bottom:2rem;">
+          <div class="form-group">
+            <label>Institution</label>
+            <input type="text" name="institution_{{ i }}" value="{{ form.get('institution_' ~ i, '') }}">
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Qualification</label>
+              <input type="text" name="qualification_{{ i }}" value="{{ form.get('qualification_' ~ i, '') }}" placeholder="Bachelor's Degree">
+            </div>
+            <div class="form-group">
+              <label>Field of Study</label>
+              <input type="text" name="field_{{ i }}" value="{{ form.get('field_' ~ i, '') }}">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Year</label>
+              <input type="text" name="year_{{ i }}" value="{{ form.get('year_' ~ i, '') }}" placeholder="2020">
+            </div>
+            <div class="form-group">
+              <label>Grade (optional)</label>
+              <input type="text" name="grade_{{ i }}" value="{{ form.get('grade_' ~ i, '') }}">
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Skills -->
+      <div class="form-card">
+        <h2 class="section-title">Skills</h2>
+        <div class="form-group">
+          <label>Enter your skills (comma-separated)</label>
+          <input type="text" name="skills_hidden" id="field_skills"
+                 value="{{ form.get('skills_hidden', '') }}"
+                 placeholder="Python, Project Management, Communication">
+        </div>
+      </div>
+
+      <!-- Languages -->
+      <div class="form-card">
+        <h2 class="section-title">Languages</h2>
+        {% for i in range(1, 5) %}
+        <div class="grid-2" style="margin-bottom:1rem;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Language {{ i }}</label>
+            <input type="text" name="lang_{{ i }}" value="{{ form.get('lang_' ~ i, '') }}" placeholder="e.g. Swahili">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Level</label>
+            <select name="lang_level_{{ i }}">
+              <option value="Basic" {% if form.get('lang_level_' ~ i) == 'Basic' %}selected{% endif %}>Basic</option>
+              <option value="Conversational" {% if form.get('lang_level_' ~ i) == 'Conversational' %}selected{% endif %}>Conversational</option>
+              <option value="Fluent" {% if form.get('lang_level_' ~ i) == 'Fluent' or not form.get('lang_level_' ~ i) %}selected{% endif %}>Fluent</option>
+              <option value="Native" {% if form.get('lang_level_' ~ i) == 'Native' %}selected{% endif %}>Native</option>
+            </select>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Template Selection -->
+      <div class="form-card" id="templateCard">
+        <h2 class="section-title">Choose Template</h2>
+        <div class="form-group">
+          <select name="template" id="templateSelect">
+            <option value="classic" {% if form.get('template') == 'classic' %}selected{% endif %}>Classic (Free)</option>
+            <option value="modern"    class="premium-only" {% if form.get('template') == 'modern'    %}selected{% endif %}>Modern (Premium)</option>
+            <option value="minimal"   class="premium-only" {% if form.get('template') == 'minimal'   %}selected{% endif %}>Minimal (Premium)</option>
+            <option value="executive" class="premium-only" {% if form.get('template') == 'executive' %}selected{% endif %}>Executive (Premium)</option>
+            <option value="creative"  class="premium-only" {% if form.get('template') == 'creative'  %}selected{% endif %}>Creative (Premium)</option>
+            <option value="tech"      class="premium-only" {% if form.get('template') == 'tech'      %}selected{% endif %}>Tech/Developer (Premium)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Upgrade Prompt (free only) -->
+      <div class="upgrade-prompt" id="upgradePrompt" style="display:none;">
+        <h3>🎉 Want More Templates?</h3>
+        <p>Upgrade to Premium for KES 50 — 5 more templates, no watermark, no ads, AI enhancement.</p>
+        <button type="button" class="btn" style="background:#FFA500;" onclick="selectTier('premium')">
+          Upgrade to Premium
+        </button>
+      </div>
+
+      <!-- AI Enhance (premium only) -->
+      <div id="aiEnhanceSection" style="display:none;">
+        <button type="button" class="ai-enhance-btn" id="aiBtn" onclick="aiEnhance()">
+          ✨ Enhance with AI — Improves Summary &amp; Bullet Points
+        </button>
+        <p class="ai-note">Requires OPENAI_API_KEY in .env &middot; ~KES 1 per enhancement</p>
+      </div>
+
+      <button type="submit" class="btn" id="submitBtn">Continue</button>
+    </form>
+
+    <script>
+      let selectedTier = 'free';
+
+      function selectTier(tier) {
+        selectedTier = tier;
+        document.getElementById('tierInput').value = tier;
+        document.getElementById('freeCard').classList.remove('selected');
+        document.getElementById('premiumCard').classList.remove('selected');
+
+        if (tier === 'free') {
+          document.getElementById('freeCard').classList.add('selected');
+          document.getElementById('formAd').style.display = 'block';
+          document.getElementById('upgradePrompt').style.display = 'block';
+          document.getElementById('aiEnhanceSection').style.display = 'none';
+          document.getElementById('submitBtn').textContent = 'Download Free CV';
+          document.querySelectorAll('.premium-only').forEach(o => o.disabled = true);
+          document.getElementById('templateSelect').value = 'classic';
+        } else {
+          document.getElementById('premiumCard').classList.add('selected');
+          document.getElementById('formAd').style.display = 'none';
+          document.getElementById('upgradePrompt').style.display = 'none';
+          document.getElementById('aiEnhanceSection').style.display = 'block';
+          document.getElementById('submitBtn').textContent = 'Continue to Payment';
+          document.querySelectorAll('.premium-only').forEach(o => o.disabled = false);
+        }
+
+        // Show upload card + form
+        document.getElementById('uploadCard').style.display = 'block';
+        document.getElementById('cvForm').style.display = 'block';
+        document.getElementById('cvForm').scrollIntoView({ behavior: 'smooth' });
+      }
+
+      // ── Resume Parser ──────────────────────────────────────────────────────
+      async function parseResume(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const status = document.getElementById('parseStatus');
+        status.textContent = 'Parsing your CV...';
+        status.style.color = 'var(--muted)';
+
+        const fd = new FormData();
+        fd.append('resume', file);
+
+        try {
+          const resp = await fetch('/parse-resume', { method: 'POST', body: fd });
+          const data = await resp.json();
+          if (data.error) {
+            status.textContent = 'Error: ' + data.error;
+            status.style.color = '#c00';
+            return;
+          }
+          const d = data.data;
+          if (d.name)         document.getElementById('field_name').value     = d.name;
+          if (d.email)        document.getElementById('field_email').value    = d.email;
+          if (d.phone)        document.getElementById('field_phone').value    = d.phone;
+          if (d.title)        document.getElementById('field_title').value    = d.title;
+          if (d.linkedin)     document.getElementById('field_linkedin').value = d.linkedin;
+          if (d.website)      document.getElementById('field_website').value  = d.website;
+          if (d.summary)      document.getElementById('field_summary').value  = d.summary;
+          if (d.skills_hidden) document.getElementById('field_skills').value  = d.skills_hidden;
+
+          const filled = Object.keys(d).length;
+          status.textContent = `✅ Auto-filled ${filled} field${filled !== 1 ? 's' : ''}! Review and complete the rest.`;
+          status.style.color = '#0F6E56';
+        } catch(e) {
+          status.textContent = 'Error: ' + e.message;
+          status.style.color = '#c00';
+        }
+        // Reset input so same file can be re-uploaded
+        input.value = '';
+      }
+
+      // ── AI Enhancer ────────────────────────────────────────────────────────
+      async function aiEnhance() {
+        const btn = document.getElementById('aiBtn');
+        btn.disabled = true;
+        btn.textContent = '✨ Enhancing...';
+
+        try {
+          const resp = await fetch('/ai-enhance', { method: 'POST' });
+          const data = await resp.json();
+          if (data.error) {
+            alert('AI Error: ' + data.error);
+            btn.textContent = '✨ Enhance with AI — Improves Summary & Bullet Points';
+            btn.disabled = false;
+            return;
+          }
+          if (data.summary) {
+            document.getElementById('field_summary').value = data.summary;
+          }
+          if (data.experience) {
+            data.experience.forEach((exp, i) => {
+              const el = document.getElementById('resp_' + (i + 1));
+              if (el && exp.responsibilities) el.value = exp.responsibilities;
+            });
+          }
+          btn.textContent = '✅ Enhanced! Review the changes above.';
+          btn.style.background = '#0F6E56';
+        } catch(e) {
+          alert('Error: ' + e.message);
+          btn.textContent = '✨ Enhance with AI — Improves Summary & Bullet Points';
+          btn.disabled = false;
+        }
+      }
+    </script>
+  </div>
+</body>
+</html>

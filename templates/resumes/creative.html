@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page { size: A4; margin: 0; }
+    body { font-family: 'Arial', sans-serif; font-size: 10.5pt; line-height: 1.5; color: #333; margin: 0; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; text-align: center; }
+    h1 { font-size: 28pt; margin: 0; font-weight: 800; letter-spacing: 1px; }
+    .title { font-size: 14pt; margin-top: 8px; opacity: 0.95; }
+    .contact { margin-top: 15px; font-size: 10pt; }
+    .contact span { margin: 0 10px; }
+    .content { padding: 30px 40px; }
+    h2 { font-size: 13pt; margin: 25px 0 12px 0; color: #667eea; text-transform: uppercase; font-weight: 700; position: relative; padding-left: 15px; }
+    h2::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 5px; height: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 3px; }
+    h3 { font-size: 11pt; margin: 10px 0 5px 0; font-weight: 700; color: #333; }
+    .section { margin-bottom: 25px; }
+    .job, .edu { margin-bottom: 18px; background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea; }
+    .company { color: #764ba2; font-weight: 600; }
+    .date { color: #999; font-size: 9.5pt; margin-top: 3px; }
+    .skills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .skill { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px; border-radius: 6px; font-size: 9.5pt; text-align: center; font-weight: 600; }
+    p { margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>{{ cv.name }}</h1>
+    <div class="title">{{ cv.title }}</div>
+    <div class="contact">
+      <span>{{ cv.email }}</span>
+      <span>|</span>
+      <span>{{ cv.phone }}</span>
+      <span>|</span>
+      <span>{{ cv.location }}</span>
+      {% if cv.linkedin %}<span>|</span><span>{{ cv.linkedin }}</span>{% endif %}
+    </div>
+  </div>
+
+  <div class="content">
+    {% if cv.summary %}
+    <div class="section">
+      <h2>About Me</h2>
+      <p>{{ cv.summary }}</p>
+    </div>
+    {% endif %}
+
+    {% if cv.experience %}
+    <div class="section">
+      <h2>Experience</h2>
+      {% for job in cv.experience %}
+      <div class="job">
+        <h3>{{ job.job_title }}</h3>
+        <div class="company">{{ job.company }}</div>
+        <div class="date">{{ job.start }} - {{ job.end }}</div>
+        {% if job.responsibilities %}
+        <p>{{ job.responsibilities }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if cv.education %}
+    <div class="section">
+      <h2>Education</h2>
+      {% for edu in cv.education %}
+      <div class="edu">
+        <h3>{{ edu.qualification }}{% if edu.field %} in {{ edu.field }}{% endif %}</h3>
+        <div class="company">{{ edu.institution }}</div>
+        <div class="date">{{ edu.year }}{% if edu.grade %} | {{ edu.grade }}{% endif %}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if cv.skills %}
+    <div class="section">
+      <h2>Skills</h2>
+      <div class="skills">
+        {% for skill in cv.skills %}
+        <div class="skill">{{ skill }}</div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if cv.languages %}
+    <div class="section">
+      <h2>Languages</h2>
+      {% for lang in cv.languages %}
+      <div style="margin-bottom: 5px;"><strong>{{ lang.language }}</strong> - {{ lang.level }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</body>
+</html>

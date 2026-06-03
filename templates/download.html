@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Download Your CV — ConverterPro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--green:#0F6E56;--green-pale:#E8F5F0;--text:#1A1A2E;--muted:#6B7280;--border:#E5E7EB}
+    body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#f0faf6 0%,#fff 60%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+    .card{background:white;border-radius:20px;padding:3rem;max-width:560px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.08);text-align:center}
+    .icon{font-size:5rem;margin-bottom:1.5rem;display:block}
+    h1{font-size:2rem;font-weight:800;color:var(--text);margin-bottom:0.75rem}
+    .subtitle{color:var(--muted);font-size:1.05rem;margin-bottom:2rem;line-height:1.6}
+    .info-box{background:var(--green-pale);border-radius:12px;padding:1.5rem;margin-bottom:2rem;text-align:left}
+    .info-row{display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0}
+    .info-row:not(:last-child){border-bottom:1px solid rgba(15,110,86,0.15)}
+    .info-label{color:var(--muted);font-size:0.9rem}
+    .info-value{font-weight:600;color:var(--text);font-size:0.9rem}
+    .btn{display:block;width:100%;padding:1rem;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;text-decoration:none;transition:all 0.2s;border:none;margin-bottom:0.75rem}
+    .btn-primary{background:var(--green);color:white}
+    .btn-primary:hover{background:#0A4F3D;transform:translateY(-2px);box-shadow:0 4px 16px rgba(15,110,86,0.3)}
+    .btn-secondary{background:white;color:var(--green);border:2px solid var(--green)}
+    .btn-secondary:hover{background:var(--green-pale)}
+    .btn-orange{background:#FF9800;color:white}
+    .btn-orange:hover{background:#e68900;transform:translateY(-2px)}
+    .btn-whatsapp{background:#25D366;color:white}
+    .btn-whatsapp:hover{background:#1da851;transform:translateY(-2px)}
+    .divider{border:none;border-top:1px solid var(--border);margin:1.5rem 0}
+    .section-label{font-size:0.8rem;text-transform:uppercase;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:1rem}
+    .error-box{background:#FFF0F0;border:1px solid #ffcccc;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;color:#c00;text-align:left}
+    .feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:2rem}
+    .feature-btn{padding:0.75rem;border-radius:10px;font-size:0.85rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s;border:2px solid var(--border);background:white;color:var(--text);display:flex;align-items:center;gap:0.5rem;justify-content:center}
+    .feature-btn:hover{border-color:var(--green);background:var(--green-pale);color:var(--green)}
+    @media(max-width:480px){.feature-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    {% if error %}
+    <!-- ERROR STATE -->
+    <span class="icon">⚠️</span>
+    <h1>Something went wrong</h1>
+    <div class="error-box">
+      <strong>Error:</strong> {{ error }}<br><br>
+      <small>If WeasyPrint/GTK is not installed, run:<br>
+      <code>pip install weasyprint</code> and install GTK for Windows.</small>
+    </div>
+    <a href="{{ url_for('builder') }}" class="btn btn-primary">Back to Builder</a>
+
+    {% else %}
+    <!-- SUCCESS STATE -->
+    <span class="icon">🎉</span>
+    <h1>Your CV is Ready!</h1>
+    <p class="subtitle">
+      {% if cv and cv.tier == 'premium' %}
+        Your premium PDF is downloading now. Check your downloads folder.
+      {% else %}
+        Your free CV is downloading. Upgrade to Premium for more templates and no watermark.
+      {% endif %}
+    </p>
+
+    {% if cv %}
+    <div class="info-box">
+      <div class="info-row">
+        <span class="info-label">Name</span>
+        <span class="info-value">{{ cv.name }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Template</span>
+        <span class="info-value">{{ cv.template|title }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Tier</span>
+        <span class="info-value">{{ cv.tier|title }}</span>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Re-download only for premium -->
+    {% if token %}
+    <a href="{{ url_for('download', token=token) }}" class="btn btn-primary">
+      ⬇ Download Again
+    </a>
+    {% endif %}
+
+    <hr class="divider">
+    <div class="section-label">Boost Your Job Search</div>
+
+    <div class="feature-grid">
+      <a href="{{ url_for('ats_check') }}" class="feature-btn">📊 Check ATS Score</a>
+      <a href="{{ url_for('cover_letter') }}" class="feature-btn">✉ Cover Letter</a>
+      <a href="{{ url_for('builder') }}" class="feature-btn">🔄 New CV</a>
+      <a href="{{ url_for('converter') }}" class="feature-btn">🔃 File Converter</a>
+    </div>
+
+    {% if cv and cv.tier == 'free' %}
+    <hr class="divider">
+    <div class="section-label">Want More?</div>
+    <a href="{{ url_for('builder') }}" class="btn btn-orange"
+       onclick="document.getElementById('tierInput') && selectTier('premium')">
+      ⭐ Upgrade to Premium — KES 50
+    </a>
+    <p style="font-size:0.8rem;color:var(--muted);margin-top:0.5rem">
+      All 6 templates · No watermark · No ads · Email delivery
+    </p>
+    {% endif %}
+
+    <hr class="divider">
+    <div class="section-label">Share with Friends</div>
+    <a href="https://wa.me/?text={{ 'I just built my professional CV in 5 minutes for KES 50! Try ConverterPro: https://converterpro.com' | urlencode }}"
+       target="_blank" class="btn btn-whatsapp">
+      💬 Share on WhatsApp
+    </a>
+    {% endif %}
+
+  </div>
+
+  {% if not error %}
+  <script>
+    // Auto-trigger download on page load if token present
+    {% if token %}
+    window.addEventListener('load', function() {
+      // Download already triggered by the /download route redirect
+      // This page is shown after the file was sent
+    });
+    {% endif %}
+  </script>
+  {% endif %}
+</body>
+</html>

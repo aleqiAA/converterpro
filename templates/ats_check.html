@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATS Score Checker — ConverterPro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--green:#0F6E56;--green-pale:#E8F5F0;--text:#1A1A2E;--muted:#6B7280;--border:#E5E7EB}
+    body{font-family:'Inter',sans-serif;background:#f9fafb;padding:2rem 1rem}
+    .container{max-width:760px;margin:0 auto}
+    .header{text-align:center;margin-bottom:2.5rem}
+    h1{font-size:2rem;font-weight:800;color:var(--text);margin-bottom:0.5rem}
+    .subtitle{color:var(--muted);font-size:1rem}
+    .card{background:white;border-radius:16px;padding:2rem;margin-bottom:1.5rem;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+    label{display:block;font-weight:600;color:var(--text);margin-bottom:0.5rem}
+    textarea{width:100%;padding:0.75rem;border:2px solid var(--border);border-radius:8px;font-size:0.95rem;font-family:'Inter',sans-serif;min-height:120px;resize:vertical}
+    textarea:focus{outline:none;border-color:var(--green)}
+    .btn{padding:0.9rem 2rem;background:var(--green);color:white;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;width:100%;transition:all 0.2s}
+    .btn:hover{background:#0A4F3D}
+    .btn:disabled{background:var(--border);cursor:not-allowed}
+    /* Score display */
+    .score-ring{text-align:center;margin-bottom:2rem}
+    .score-circle{display:inline-flex;align-items:center;justify-content:center;width:140px;height:140px;border-radius:50%;font-size:2.8rem;font-weight:800;color:white;margin-bottom:1rem;position:relative}
+    .grade-label{font-size:1rem;font-weight:600;margin-top:0.5rem}
+    .bars{display:grid;gap:1rem;margin-bottom:1.5rem}
+    .bar-row label{font-size:0.85rem;color:var(--muted);margin-bottom:0.3rem;display:flex;justify-content:space-between}
+    .bar-track{background:#f0f0f0;border-radius:99px;height:10px;overflow:hidden}
+    .bar-fill{height:100%;border-radius:99px;transition:width 1s ease}
+    .kw-grid{display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem}
+    .kw-tag{padding:0.3rem 0.75rem;border-radius:99px;font-size:0.8rem;font-weight:600}
+    .kw-found{background:#E8F5F0;color:#0F6E56}
+    .kw-missing{background:#FFF0F0;color:#c00}
+    .list-issues{list-style:none;padding:0}
+    .list-issues li{padding:0.5rem 0.75rem;border-radius:8px;margin-bottom:0.5rem;font-size:0.9rem}
+    .list-issues li.issue{background:#FFF0F0;color:#c00}
+    .list-issues li.suggestion{background:#FFF8E1;color:#856404}
+    .no-cv-box{background:#FFF8E1;border:2px solid #FFD54F;border-radius:12px;padding:2rem;text-align:center}
+    .no-cv-box h3{color:#5D4037;margin-bottom:0.75rem}
+    .no-cv-box p{color:#6D4C41;margin-bottom:1.5rem;font-size:0.95rem}
+    .btn-outline{background:white;color:var(--green);border:2px solid var(--green)}
+    .btn-outline:hover{background:var(--green-pale)}
+    #results{display:none}
+    .spinner{display:none;text-align:center;padding:2rem;color:var(--muted)}
+    .back-link{display:inline-block;color:var(--green);font-weight:600;text-decoration:none;margin-bottom:1.5rem}
+    .back-link:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+<div class="container">
+  <a href="{{ url_for('builder') }}" class="back-link">← Back to Builder</a>
+  <div class="header">
+    <h1>📊 ATS Score Checker</h1>
+    <p class="subtitle">Find out how well your CV performs with Applicant Tracking Systems</p>
+  </div>
+
+  {% if not has_cv %}
+  <div class="no-cv-box">
+    <h3>No CV Found</h3>
+    <p>You need to fill out the CV builder first before checking your ATS score.</p>
+    <a href="{{ url_for('builder') }}" class="btn" style="display:inline-block;width:auto;text-decoration:none">
+      Build My CV First
+    </a>
+  </div>
+  {% else %}
+
+  <div class="card">
+    <label for="jd">Paste a Job Description (optional but recommended)</label>
+    <textarea id="jd" placeholder="Paste the full job description here for a precise keyword match score..."></textarea>
+    <br>
+    <button class="btn" id="checkBtn" onclick="runCheck()">Check My ATS Score</button>
+  </div>
+
+  <div class="spinner" id="spinner">⏳ Analysing your CV...</div>
+
+  <div id="results">
+    <!-- Score -->
+    <div class="card">
+      <div class="score-ring">
+        <div class="score-circle" id="scoreCircle">
+          <span id="scoreNum">0</span>
+        </div>
+        <div class="grade-label" id="gradeLabel"></div>
+      </div>
+      <div class="bars">
+        <div class="bar-row">
+          <label>Formatting & Contact Info <span id="fmtVal">0/30</span></label>
+          <div class="bar-track"><div class="bar-fill" id="fmtBar" style="width:0%;background:#0F6E56"></div></div>
+        </div>
+        <div class="bar-row">
+          <label>Skills & Keywords <span id="skVal">0/30</span></label>
+          <div class="bar-track"><div class="bar-fill" id="skBar" style="width:0%;background:#2196F3"></div></div>
+        </div>
+        <div class="bar-row">
+          <label>Job Description Match <span id="jdVal">0/40</span></label>
+          <div class="bar-track"><div class="bar-fill" id="jdBar" style="width:0%;background:#FF9800"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keywords -->
+    <div class="card">
+      <h3 style="margin-bottom:1rem;color:var(--text)">Keywords Found in Your CV</h3>
+      <div class="kw-grid" id="foundKw"></div>
+      <h3 style="margin:1.5rem 0 1rem;color:var(--text)">Keywords You Should Add</h3>
+      <div class="kw-grid" id="missingKw"></div>
+    </div>
+
+    <!-- Issues & Suggestions -->
+    <div class="card">
+      <h3 style="margin-bottom:1rem;color:#c00">Issues to Fix</h3>
+      <ul class="list-issues" id="issuesList"></ul>
+      <h3 style="margin:1.5rem 0 1rem;color:#856404">Suggestions</h3>
+      <ul class="list-issues" id="suggestionsList"></ul>
+    </div>
+
+    <div class="card" style="text-align:center">
+      <p style="color:var(--muted);margin-bottom:1.5rem">Ready to improve your CV based on this score?</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <a href="{{ url_for('builder') }}" class="btn btn-outline" style="text-decoration:none;display:block">Edit My CV</a>
+        <a href="{{ url_for('cover_letter') }}" class="btn" style="text-decoration:none;display:block">Generate Cover Letter</a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+async function runCheck() {
+  const btn = document.getElementById('checkBtn');
+  const spinner = document.getElementById('spinner');
+  const results = document.getElementById('results');
+  const jd = document.getElementById('jd').value;
+
+  btn.disabled = true; btn.textContent = 'Checking...';
+  spinner.style.display = 'block';
+  results.style.display = 'none';
+
+  const fd = new FormData();
+  fd.append('job_description', jd);
+
+  try {
+    const resp = await fetch('/ats-check', {method:'POST', body:fd});
+    const data = await resp.json();
+    if (data.error) { alert('Error: ' + data.error); return; }
+    renderResults(data);
+    results.style.display = 'block';
+    results.scrollIntoView({behavior:'smooth'});
+  } catch(e) {
+    alert('Error: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Check My ATS Score';
+    spinner.style.display = 'none';
+  }
+}
+
+function renderResults(d) {
+  // Score circle
+  const circle = document.getElementById('scoreCircle');
+  circle.style.background = d.grade_color;
+  document.getElementById('scoreNum').textContent = d.score;
+  document.getElementById('gradeLabel').innerHTML =
+    `<span style="color:${d.grade_color}">Grade ${d.grade} — ${d.grade_label}</span>`;
+
+  // Bars
+  document.getElementById('fmtVal').textContent = `${d.formatting_score}/30`;
+  document.getElementById('fmtBar').style.width = `${d.formatting_score/30*100}%`;
+  document.getElementById('skVal').textContent = `${d.skills_score}/30`;
+  document.getElementById('skBar').style.width = `${d.skills_score/30*100}%`;
+  document.getElementById('jdVal').textContent = `${d.jd_score}/40`;
+  document.getElementById('jdBar').style.width = `${d.jd_score/40*100}%`;
+
+  // Keywords
+  const foundEl = document.getElementById('foundKw');
+  foundEl.innerHTML = d.found_keywords.length
+    ? d.found_keywords.map(k=>`<span class="kw-tag kw-found">${k}</span>`).join('')
+    : '<span style="color:var(--muted);font-size:0.9rem">No industry keywords detected</span>';
+
+  const missingEl = document.getElementById('missingKw');
+  missingEl.innerHTML = d.missing_keywords.length
+    ? d.missing_keywords.map(k=>`<span class="kw-tag kw-missing">${k}</span>`).join('')
+    : '<span style="color:#0F6E56;font-size:0.9rem">No critical keywords missing!</span>';
+
+  // Issues
+  const issuesList = document.getElementById('issuesList');
+  issuesList.innerHTML = d.issues.length
+    ? d.issues.map(i=>`<li class="issue">❌ ${i}</li>`).join('')
+    : '<li class="suggestion" style="background:#E8F5F0;color:#0F6E56">✅ No critical issues found!</li>';
+
+  // Suggestions
+  const suggEl = document.getElementById('suggestionsList');
+  suggEl.innerHTML = d.suggestions.length
+    ? d.suggestions.map(s=>`<li class="suggestion">💡 ${s}</li>`).join('')
+    : '<li class="suggestion">Your CV looks good!</li>';
+}
+</script>
+</body>
+</html>

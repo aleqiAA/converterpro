@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ConverterPro — Professional CV Builder & File Converter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+       crossorigin="anonymous"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:       #0F6E56;
+      --green-light: #1D9E75;
+      --green-pale:  #E8F5F0;
+      --green-dark:  #0A4F3D;
+      --text:        #1A1A2E;
+      --muted:       #6B7280;
+      --border:      #E5E7EB;
+      --white:       #FFFFFF;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: var(--white);
+      line-height: 1.6;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    /* ── Navbar ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 5vw;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-size: 1.4rem; font-weight: 800;
+      color: var(--green);
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .nav-logo span {
+      background: var(--green);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 1.1rem;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 10px 24px; border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600; font-size: 0.95rem;
+      cursor: pointer; border: none;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--green); color: white;
+    }
+    .btn-primary:hover {
+      background: var(--green-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(15,110,86,0.35);
+    }
+
+    .btn-large {
+      padding: 16px 40px; font-size: 1.1rem; border-radius: 10px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #f0faf6 0%, #ffffff 60%);
+      padding: 100px 5vw 80px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: var(--green-pale);
+      color: var(--green);
+      font-size: 0.82rem; font-weight: 600;
+      padding: 6px 16px; border-radius: 100px;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(15,110,86,0.2);
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1.5px;
+      color: var(--text);
+      margin-bottom: 1.2rem;
+    }
+
+    .hero h1 span { color: var(--green); }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 520px;
+      margin: 0 auto 2.5rem;
+    }
+
+    .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    .hero-stats {
+      display: flex; justify-content: center; gap: 3rem;
+      margin-top: 4rem; flex-wrap: wrap;
+    }
+
+    .hero-stat { text-align: center; }
+    .hero-stat-num {
+      font-size: 1.8rem; font-weight: 800; color: var(--green);
+    }
+    .hero-stat-label { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── How it works ── */
+    .section { padding: 80px 5vw; }
+    .section-label {
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--green);
+      margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 800; letter-spacing: -0.5px;
+      margin-bottom: 0.75rem;
+    }
+    .section-sub {
+      font-size: 1rem; color: var(--muted);
+      max-width: 500px; margin-bottom: 3rem;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 2rem; max-width: 900px;
+    }
+
+    .step {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      position: relative;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .step:hover {
+      box-shadow: 0 8px 32px rgba(15,110,86,0.1);
+      transform: translateY(-3px);
+    }
+
+    .step-num {
+      position: absolute; top: -14px; left: 24px;
+      background: var(--green); color: white;
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700;
+    }
+
+    .step-icon {
+      font-size: 2rem; margin-bottom: 1rem;
+    }
+
+    .step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .step p  { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── Templates ── */
+    .templates-section { background: #f9fafb; }
+
+    .template-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem; max-width: 900px;
+    }
+
+    .template-card {
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+      cursor: pointer;
+    }
+    .template-card:hover {
+      border-color: var(--green);
+      box-shadow: 0 8px 32px rgba(15,110,86,0.12);
+      transform: translateY(-3px);
+    }
+
+    .template-preview {
+      height: 180px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem;
+      position: relative; overflow: hidden;
+    }
+
+    .preview-classic {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 16px;
+    }
+    .preview-modern {
+      background: linear-gradient(to right, var(--green) 35%, white 35%);
+    }
+    .preview-minimal {
+      background: white;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Mini CV previews */
+    .mini-cv { width: 100%; height: 100%; padding: 12px; }
+    .mini-line { height: 6px; border-radius: 3px; margin-bottom: 5px; background: #e5e7eb; }
+    .mini-line.dark { background: #374151; }
+    .mini-line.green { background: var(--green); }
+    .mini-line.short { width: 60%; }
+    .mini-line.shorter { width: 40%; }
+    .mini-line.thin { height: 4px; }
+
+    .template-info { padding: 1.25rem; }
+    .template-name {
+      font-weight: 700; font-size: 1rem; margin-bottom: 0.3rem;
+    }
+    .template-badge {
+      display: inline-block;
+      background: var(--green-pale); color: var(--green);
+      font-size: 0.72rem; font-weight: 600;
+      padding: 2px 10px; border-radius: 100px;
+      margin-bottom: 0.5rem;
+    }
+    .template-desc { font-size: 0.85rem; color: var(--muted); }
+
+    /* ── Price section ── */
+    .price-section {
+      background: var(--green);
+      color: white;
+      text-align: center;
+      padding: 80px 5vw;
+    }
+    .price-section .section-label { color: rgba(255,255,255,0.7); }
+    .price-section .section-title { color: white; }
+    .price-section .section-sub { color: rgba(255,255,255,0.8); margin: 0 auto 2rem; }
+
+    .price-tag {
+      font-size: 4rem; font-weight: 800;
+      margin: 1rem 0;
+    }
+    .price-tag small { font-size: 1.5rem; font-weight: 400; opacity: 0.8; }
+
+    .price-features {
+      display: flex; justify-content: center; gap: 2rem;
+      flex-wrap: wrap; margin: 2rem 0;
+    }
+    .price-feature {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.9rem; opacity: 0.9;
+    }
+    .price-feature::before { content: "✓"; font-weight: 700; }
+
+    .btn-white {
+      background: white; color: var(--green);
+      font-weight: 700;
+    }
+    .btn-white:hover {
+      background: var(--green-pale);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--text);
+      color: rgba(255,255,255,0.6);
+      text-align: center;
+      padding: 2rem 5vw;
+      font-size: 0.88rem;
+    }
+    footer a { color: rgba(255,255,255,0.8); }
+    footer a:hover { color: white; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .hero { padding: 60px 5vw 50px; }
+      .hero-stats { gap: 1.5rem; }
+      .steps, .template-cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav>
+  <a href="/" class="nav-logo">
+    <span>C</span>onverterPro
+  </a>
+  <div style="display: flex; gap: 1rem; align-items: center;">
+    <a href="/converter" style="color: var(--text); font-weight: 600;">File Converter</a>
+    <a href="/builder" class="btn btn-primary">Build CV</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge">🌍 Professional Tools for Everyone</div>
+  <h1>Professional CV Builder<br>& <span>File Converter</span></h1>
+  <p>Create stunning CVs and convert any file format. Start FREE or go Premium.</p>
+  <div class="hero-cta">
+    <a href="/builder" class="btn btn-primary btn-large">Start FREE Now</a>
+    <a href="#pricing" class="btn" style="background:#f3f4f6;color:var(--text);">See Pricing</a>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-num">FREE</div>
+      <div class="hero-stat-label">Basic CV Builder</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-num">KES 50</div>
+      <div class="hero-stat-label">Premium upgrade</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-num">3</div>
+      <div class="hero-stat-label">Professional templates</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-num">FREE</div>
+      <div class="hero-stat-label">File converter</div>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="section" id="how-it-works">
+  <div class="section-label">Simple Process</div>
+  <h2 class="section-title">Three steps to your dream job</h2>
+  <p class="section-sub">No account needed. No subscriptions. Just fill, pay, and download.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-icon">✏️</div>
+      <h3>Fill Your Details</h3>
+      <p>Enter your work experience, education, skills, and choose a template. Takes about 5 minutes.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-icon">📱</div>
+      <h3>Choose Your Plan</h3>
+      <p>Start FREE with basic features or upgrade to Premium for KES 50 to unlock all templates and remove watermark.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-icon">⬇️</div>
+      <h3>Download Your CV</h3>
+      <p>Your professional PDF CV downloads instantly after payment. Ready to send to employers.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Google AdSense Ad -->
+<section class="section" style="background:#f9f9f9; padding:2rem; text-align:center;">
+  <div style="font-size:0.7rem; color:#999; margin-bottom:0.5rem;">ADVERTISEMENT</div>
+  <!-- Replace with your AdSense code -->
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+       data-ad-slot="XXXXXXXXXX"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>
+       (adsbygoogle = window.adsbygoogle || []).push({});
+  </script>
+</section>
+
+<!-- Templates -->
+<section class="section templates-section" id="templates">
+  <div class="section-label">Choose Your Style</div>
+  <h2 class="section-title">Three professional templates</h2>
+  <p class="section-sub">All templates are ATS-friendly and accepted by global employers.</p>
+  <div class="template-cards">
+
+    <div class="template-card" onclick="window.location='/builder'">
+      <div class="template-preview preview-classic">
+        <div class="mini-cv">
+          <div class="mini-line dark" style="width:55%;height:8px;margin:0 auto 6px;"></div>
+          <div class="mini-line" style="width:40%;margin:0 auto 10px;"></div>
+          <div class="mini-line short"></div>
+          <div class="mini-line thin"></div>
+          <div class="mini-line thin shorter"></div>
+          <div class="mini-line" style="margin-top:10px;width:30%;height:5px;background:#374151;"></div>
+          <div class="mini-line thin"></div>
+          <div class="mini-line thin"></div>
+          <div class="mini-line thin shorter"></div>
+        </div>
+      </div>
+      <div class="template-info">
+        <div class="template-name">Classic</div>
+        <div class="template-badge">Most Popular</div>
+        <p class="template-desc">Traditional single-column layout. Perfect for corporate, finance, law, and government roles. Maximum ATS compatibility.</p>
+      </div>
+    </div>
+
+    <div class="template-card" onclick="window.location='/builder'">
+      <div class="template-preview preview-modern">
+        <div style="display:flex;width:100%;height:100%;">
+          <div style="width:35%;background:var(--green);padding:12px;">
+            <div class="mini-line" style="background:white;opacity:0.9;height:7px;margin-bottom:5px;"></div>
+            <div class="mini-line" style="background:rgba(255,255,255,0.5);height:4px;width:70%;margin-bottom:10px;"></div>
+            <div class="mini-line" style="background:rgba(255,255,255,0.4);height:3px;margin-bottom:3px;"></div>
+            <div class="mini-line" style="background:rgba(255,255,255,0.4);height:3px;width:80%;margin-bottom:3px;"></div>
+            <div class="mini-line" style="background:rgba(255,255,255,0.4);height:3px;width:60%;"></div>
+          </div>
+          <div style="width:65%;padding:12px;">
+            <div class="mini-line green" style="width:50%;height:5px;margin-bottom:8px;"></div>
+            <div class="mini-line thin"></div>
+            <div class="mini-line thin shorter"></div>
+            <div class="mini-line green" style="width:40%;height:5px;margin:8px 0;"></div>
+            <div class="mini-line thin"></div>
+            <div class="mini-line thin"></div>
+          </div>
+        </div>
+      </div>
+      <div class="template-info">
+        <div class="template-name">Modern</div>
+        <div class="template-badge">Eye-Catching</div>
+        <p class="template-desc">Two-column design with a bold green sidebar. Ideal for business, marketing, sales, and management professionals.</p>
+      </div>
+    </div>
+
+    <div class="template-card" onclick="window.location='/builder'">
+      <div class="template-preview preview-minimal">
+        <div class="mini-cv" style="padding:16px 20px;">
+          <div class="mini-line dark" style="width:45%;height:7px;margin:0 auto 4px;"></div>
+          <div class="mini-line" style="width:35%;margin:0 auto 12px;"></div>
+          <div style="height:1px;background:#e5e7eb;margin-bottom:10px;"></div>
+          <div class="mini-line" style="width:25%;height:4px;background:#9ca3af;margin-bottom:6px;"></div>
+          <div class="mini-line thin"></div>
+          <div class="mini-line thin shorter"></div>
+          <div class="mini-line" style="width:20%;height:4px;background:#9ca3af;margin:8px 0 6px;"></div>
+          <div class="mini-line thin"></div>
+        </div>
+      </div>
+      <div class="template-info">
+        <div class="template-name">Minimal</div>
+        <div class="template-badge">Clean & Modern</div>
+        <p class="template-desc">Ultra-clean whitespace design. Perfect for tech, design, creative, and startup roles where simplicity signals confidence.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Google AdSense Ad -->
+<section class="section" style="background:#fff; padding:2rem; text-align:center;">
+  <div style="font-size:0.7rem; color:#999; margin-bottom:0.5rem;">ADVERTISEMENT</div>
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+       data-ad-slot="XXXXXXXXXX"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>
+       (adsbygoogle = window.adsbygoogle || []).push({});
+  </script>
+</section>
+
+<!-- Price CTA -->
+<section class="price-section" id="pricing">
+  <div class="section-label">Flexible Pricing</div>
+  <h2 class="section-title">Start FREE. Upgrade Anytime.</h2>
+  <p class="section-sub">No credit card required. No subscriptions. Pay only if you want premium features.</p>
+  
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; max-width:900px; margin:2rem auto;">
+    <div style="background:rgba(255,255,255,0.1); padding:2rem; border-radius:16px; border:2px solid rgba(255,255,255,0.3);">
+      <h3 style="font-size:1.5rem; margin-bottom:1rem;">FREE</h3>
+      <div class="price-tag" style="font-size:3rem;">KES 0</div>
+      <div class="price-features" style="flex-direction:column; align-items:flex-start;">
+        <div class="price-feature">Classic Template</div>
+        <div class="price-feature">Standard Quality</div>
+        <div class="price-feature">Small Watermark</div>
+        <div class="price-feature">Instant Download</div>
+      </div>
+    </div>
+    
+    <div style="background:rgba(255,255,255,0.2); padding:2rem; border-radius:16px; border:3px solid #FFA500; position:relative;">
+      <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:#FFA500; padding:4px 16px; border-radius:20px; font-size:0.75rem; font-weight:700;">POPULAR</div>
+      <h3 style="font-size:1.5rem; margin-bottom:1rem;">PREMIUM</h3>
+      <div class="price-tag" style="font-size:3rem;">KES 50</div>
+      <div class="price-features" style="flex-direction:column; align-items:flex-start;">
+        <div class="price-feature">All 3 Templates</div>
+        <div class="price-feature">High Quality PDF</div>
+        <div class="price-feature">NO Watermark</div>
+        <div class="price-feature">NO Ads</div>
+        <div class="price-feature">Re-download (24hrs)</div>
+      </div>
+    </div>
+  </div>
+  
+  <a href="/builder" class="btn btn-white btn-large">Start Building Now</a>
+  
+  <p style="margin-top:2rem; opacity:0.8; font-size:0.9rem;">💳 Premium: Pay via M-Pesa or Card | 🆓 File Converter: Always FREE</p>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p>ConverterPro &copy; 2025 | Professional CV Builder & File Converter &nbsp;·&nbsp;
+     <a href="/builder">Build CV</a> &nbsp;·&nbsp;
+     <a href="/converter">File Converter</a> &nbsp;·&nbsp;
+     <a href="#how-it-works">How It Works</a>
+  </p>
+</footer>
+
+</body>
+</html>

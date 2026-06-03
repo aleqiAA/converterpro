@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page { size: A4; margin: 2cm; }
+    body { font-family: 'Arial', sans-serif; font-size: 11pt; line-height: 1.5; color: #333; }
+    h1 { font-size: 24pt; margin: 0 0 5px 0; color: #1a1a1a; }
+    h2 { font-size: 14pt; margin: 20px 0 10px 0; color: #1a1a1a; border-bottom: 2px solid #0F6E56; padding-bottom: 5px; }
+    h3 { font-size: 12pt; margin: 10px 0 5px 0; color: #1a1a1a; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .contact { font-size: 10pt; color: #666; margin-top: 5px; }
+    .section { margin-bottom: 20px; }
+    .job, .edu { margin-bottom: 15px; }
+    .job-title, .edu-title { font-weight: bold; color: #1a1a1a; }
+    .company, .institution { color: #0F6E56; font-weight: 600; }
+    .date { color: #666; font-size: 10pt; font-style: italic; }
+    .skills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .skill { background: #E8F5F0; padding: 4px 12px; border-radius: 4px; font-size: 10pt; }
+    ul { margin: 5px 0; padding-left: 20px; }
+    li { margin-bottom: 3px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>{{ cv.name }}</h1>
+    <div style="font-size: 13pt; color: #0F6E56; margin: 5px 0;">{{ cv.title }}</div>
+    <div class="contact">
+      {{ cv.email }} | {{ cv.phone }} | {{ cv.location }}
+      {% if cv.linkedin %} | {{ cv.linkedin }}{% endif %}
+      {% if cv.website %} | {{ cv.website }}{% endif %}
+    </div>
+  </div>
+
+  {% if cv.summary %}
+  <div class="section">
+    <h2>Professional Summary</h2>
+    <p>{{ cv.summary }}</p>
+  </div>
+  {% endif %}
+
+  {% if cv.experience %}
+  <div class="section">
+    <h2>Work Experience</h2>
+    {% for job in cv.experience %}
+    <div class="job">
+      <div class="job-title">{{ job.job_title }}</div>
+      <div class="company">{{ job.company }}</div>
+      <div class="date">{{ job.start }} - {{ job.end }}</div>
+      {% if job.responsibilities %}
+      <p style="margin-top: 5px;">{{ job.responsibilities }}</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if cv.education %}
+  <div class="section">
+    <h2>Education</h2>
+    {% for edu in cv.education %}
+    <div class="edu">
+      <div class="edu-title">{{ edu.qualification }}{% if edu.field %} in {{ edu.field }}{% endif %}</div>
+      <div class="institution">{{ edu.institution }}</div>
+      <div class="date">{{ edu.year }}{% if edu.grade %} | {{ edu.grade }}{% endif %}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if cv.skills %}
+  <div class="section">
+    <h2>Skills</h2>
+    <div class="skills">
+      {% for skill in cv.skills %}
+      <span class="skill">{{ skill }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if cv.languages %}
+  <div class="section">
+    <h2>Languages</h2>
+    {% for lang in cv.languages %}
+    <div><strong>{{ lang.language }}</strong> - {{ lang.level }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</body>
+</html>

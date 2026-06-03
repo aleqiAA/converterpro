@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cover Letter Generator — ConverterPro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--green:#0F6E56;--green-pale:#E8F5F0;--text:#1A1A2E;--muted:#6B7280;--border:#E5E7EB}
+    body{font-family:'Inter',sans-serif;background:#f9fafb;padding:2rem 1rem}
+    .container{max-width:680px;margin:0 auto}
+    .header{text-align:center;margin-bottom:2.5rem}
+    h1{font-size:2rem;font-weight:800;color:var(--text);margin-bottom:0.5rem}
+    .subtitle{color:var(--muted);font-size:1rem}
+    .card{background:white;border-radius:16px;padding:2rem;margin-bottom:1.5rem;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+    .form-group{margin-bottom:1.25rem}
+    label{display:block;font-weight:600;color:var(--text);margin-bottom:0.5rem;font-size:0.95rem}
+    input,select{width:100%;padding:0.75rem;border:2px solid var(--border);border-radius:8px;font-size:0.95rem;font-family:'Inter',sans-serif}
+    input:focus,select:focus{outline:none;border-color:var(--green)}
+    .btn{padding:0.9rem 2rem;background:var(--green);color:white;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;width:100%;transition:all 0.2s}
+    .btn:hover{background:#0A4F3D;transform:translateY(-2px)}
+    .btn:disabled{background:var(--border);cursor:not-allowed;transform:none}
+    .cv-preview{background:var(--green-pale);border-radius:10px;padding:1.25rem;margin-bottom:1.5rem}
+    .cv-preview h3{font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:0.75rem}
+    .cv-row{display:flex;justify-content:space-between;font-size:0.9rem;padding:0.25rem 0}
+    .cv-label{color:var(--muted)}
+    .cv-val{font-weight:600;color:var(--text)}
+    .no-ai-box{background:#FFF8E1;border:2px solid #FFD54F;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+    .no-ai-box p{color:#5D4037;font-size:0.9rem;line-height:1.6}
+    .no-ai-box code{background:#f5f5f5;padding:2px 6px;border-radius:4px;font-size:0.85rem}
+    .spinner{display:none;text-align:center;padding:2rem;color:var(--muted);font-size:1.1rem}
+    .back-link{display:inline-block;color:var(--green);font-weight:600;text-decoration:none;margin-bottom:1.5rem}
+    .back-link:hover{text-decoration:underline}
+    .price-badge{display:inline-block;background:#FF9800;color:white;padding:3px 12px;border-radius:99px;font-size:0.75rem;font-weight:700;margin-left:0.5rem;vertical-align:middle}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    @media(max-width:480px){.grid-2{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="container">
+  <a href="{{ url_for('download_free') if cv and cv.tier == 'free' else url_for('builder') }}" class="back-link">← Back</a>
+
+  <div class="header">
+    <h1>✉ Cover Letter Generator</h1>
+    <p class="subtitle">AI-powered cover letter tailored to your CV <span class="price-badge">KES 30 add-on</span></p>
+  </div>
+
+  {% if not ai_available %}
+  <div class="no-ai-box">
+    <p><strong>AI not configured.</strong> To enable cover letter generation, add your OpenAI API key to <code>.env</code>:</p>
+    <p style="margin-top:0.75rem"><code>OPENAI_API_KEY=sk-...</code></p>
+    <p style="margin-top:0.5rem">Get a key at <a href="https://platform.openai.com" target="_blank" style="color:var(--green)">platform.openai.com</a> — costs ~$0.003 per letter.</p>
+  </div>
+  {% endif %}
+
+  {% if cv %}
+  <div class="card">
+    <div class="cv-preview">
+      <h3>Using CV data for</h3>
+      <div class="cv-row"><span class="cv-label">Name</span><span class="cv-val">{{ cv.name }}</span></div>
+      <div class="cv-row"><span class="cv-label">Title</span><span class="cv-val">{{ cv.title }}</span></div>
+      {% if cv.experience %}
+      <div class="cv-row"><span class="cv-label">Latest role</span>
+        <span class="cv-val">{{ cv.experience[0].job_title }} at {{ cv.experience[0].company }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <form id="clForm">
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Job Title Applying For</label>
+          <input type="text" name="job_title" id="jobTitle" placeholder="e.g. Data Analyst">
+        </div>
+        <div class="form-group">
+          <label>Company Name</label>
+          <input type="text" name="company" id="company" placeholder="e.g. Safaricom">
+        </div>
+      </div>
+      <button type="button" class="btn" id="generateBtn" onclick="generateLetter()"
+              {% if not ai_available %}disabled{% endif %}>
+        {% if ai_available %}Generate Cover Letter (PDF){% else %}AI Not Configured{% endif %}
+      </button>
+    </form>
+
+    <div class="spinner" id="spinner">✍ Writing your cover letter...</div>
+  </div>
+  {% else %}
+  <div class="card" style="text-align:center">
+    <p style="color:var(--muted);margin-bottom:1.5rem">Build your CV first to generate a cover letter.</p>
+    <a href="{{ url_for('builder') }}" class="btn" style="text-decoration:none;display:block">Build My CV</a>
+  </div>
+  {% endif %}
+
+  <div class="card" style="background:var(--green-pale);border:none">
+    <h3 style="color:var(--text);margin-bottom:0.75rem">What the AI writes for you:</h3>
+    <ul style="list-style:none;padding:0">
+      <li style="padding:0.4rem 0;font-size:0.9rem;color:var(--text)">✅ Professional opening tailored to the job</li>
+      <li style="padding:0.4rem 0;font-size:0.9rem;color:var(--text)">✅ Highlights your relevant experience and skills</li>
+      <li style="padding:0.4rem 0;font-size:0.9rem;color:var(--text)">✅ Strong call-to-action closing</li>
+      <li style="padding:0.4rem 0;font-size:0.9rem;color:var(--text)">✅ Downloads as a print-ready PDF</li>
+      <li style="padding:0.4rem 0;font-size:0.9rem;color:var(--text)">✅ Under 300 words — recruiters read short letters</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+async function generateLetter() {
+  const btn = document.getElementById('generateBtn');
+  const spinner = document.getElementById('spinner');
+  btn.disabled = true; btn.textContent = 'Generating...';
+  spinner.style.display = 'block';
+
+  const fd = new FormData();
+  fd.append('job_title', document.getElementById('jobTitle').value);
+  fd.append('company',   document.getElementById('company').value);
+
+  try {
+    const resp = await fetch('/cover-letter', {method:'POST', body:fd});
+    if (resp.ok) {
+      // PDF download
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const cd = resp.headers.get('Content-Disposition') || '';
+      const fn = cd.match(/filename="([^"]+)"/);
+      a.download = fn ? fn[1] : 'Cover_Letter.pdf';
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      const data = await resp.json();
+      alert('Error: ' + (data.error || 'Generation failed'));
+    }
+  } catch(e) {
+    alert('Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generate Cover Letter (PDF)';
+    spinner.style.display = 'none';
+  }
+}
+</script>
+</body>
+</html>

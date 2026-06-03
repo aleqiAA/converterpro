@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment — KaziCV</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --green: #0F6E56;
+      --green-light: #1D9E75;
+      --green-pale: #E8F5F0;
+      --text: #1A1A2E;
+      --muted: #6B7280;
+      --border: #E5E7EB;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f0faf6 0%, #ffffff 60%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 2.5rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      margin-bottom: 1.5rem;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+    
+    .price {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--green);
+      text-align: center;
+      margin: 2rem 0;
+    }
+    
+    .payment-methods {
+      display: grid;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .payment-method {
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .payment-method:hover {
+      border-color: var(--green);
+      background: var(--green-pale);
+    }
+    
+    .payment-method.active {
+      border-color: var(--green);
+      background: var(--green-pale);
+    }
+    
+    .method-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .method-icon {
+      font-size: 2rem;
+    }
+    
+    .method-name {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+    
+    .method-desc {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-left: 3rem;
+    }
+    
+    .payment-form {
+      display: none;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    
+    .payment-form.show {
+      display: block;
+    }
+    
+    label {
+      display: block;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    
+    input[type="tel"] {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: 'Inter', sans-serif;
+      margin-bottom: 1rem;
+    }
+    
+    input[type="tel"]:focus {
+      outline: none;
+      border-color: var(--green);
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 1rem;
+      background: var(--green);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn:hover {
+      background: var(--green-light);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(15,110,86,0.3);
+    }
+    
+    .btn:disabled {
+      background: var(--border);
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .status {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      display: none;
+    }
+    
+    .status.show {
+      display: block;
+    }
+    
+    .status.pending {
+      background: #FFF3CD;
+      color: #856404;
+    }
+    
+    .status.error {
+      background: #FEE;
+      color: #C00;
+    }
+    
+    .cv-summary {
+      background: var(--green-pale);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .summary-title {
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+    
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .summary-label {
+      color: var(--muted);
+    }
+    
+    .summary-value {
+      font-weight: 600;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Complete Payment</h1>
+      <p class="subtitle">Choose your preferred payment method</p>
+      
+      <div class="cv-summary">
+        <div class="summary-title">Order Summary</div>
+        <div class="summary-item">
+          <span class="summary-label">CV for:</span>
+          <span class="summary-value">{{ cv.name }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Template:</span>
+          <span class="summary-value">{{ cv.template|title }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Format:</span>
+          <span class="summary-value">PDF</span>
+        </div>
+      </div>
+      
+      <div class="price">KES 50</div>
+      
+      <div class="payment-methods">
+        <!-- M-Pesa STK Push -->
+        <div class="payment-method" id="mpesaMethod">
+          <div class="method-header">
+            <div class="method-icon">📱</div>
+            <div class="method-name">M-Pesa STK Push</div>
+          </div>
+          <div class="method-desc">Pay instantly with your M-Pesa number</div>
+          
+          <div class="payment-form" id="mpesaForm">
+            <label for="phone">M-Pesa Phone Number</label>
+            <input type="tel" id="phone" placeholder="0712345678 or 254712345678" required>
+            <button class="btn" id="mpesaBtn">Pay with M-Pesa</button>
+          </div>
+        </div>
+        
+        <!-- Stripe -->
+        <div class="payment-method" id="stripeMethod">
+          <div class="method-header">
+            <div class="method-icon">💳</div>
+            <div class="method-name">Credit/Debit Card</div>
+          </div>
+          <div class="method-desc">Pay securely with Visa, Mastercard, or other cards</div>
+          
+          <div class="payment-form" id="stripeForm">
+            <button class="btn" id="stripeBtn">Pay with Card</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+  
+  <script>
+    const mpesaMethod = document.getElementById('mpesaMethod');
+    const stripeMethod = document.getElementById('stripeMethod');
+    const mpesaForm = document.getElementById('mpesaForm');
+    const stripeForm = document.getElementById('stripeForm');
+    const mpesaBtn = document.getElementById('mpesaBtn');
+    const stripeBtn = document.getElementById('stripeBtn');
+    const phoneInput = document.getElementById('phone');
+    const status = document.getElementById('status');
+    
+    let selectedMethod = null;
+    
+    // Payment method selection
+    mpesaMethod.addEventListener('click', () => {
+      mpesaMethod.classList.add('active');
+      stripeMethod.classList.remove('active');
+      mpesaForm.classList.add('show');
+      stripeForm.classList.remove('show');
+      selectedMethod = 'mpesa';
+    });
+    
+    stripeMethod.addEventListener('click', () => {
+      stripeMethod.classList.add('active');
+      mpesaMethod.classList.remove('active');
+      stripeForm.classList.add('show');
+      mpesaForm.classList.remove('show');
+      selectedMethod = 'stripe';
+    });
+    
+    // M-Pesa payment
+    mpesaBtn.addEventListener('click', async () => {
+      const phone = phoneInput.value.trim();
+      
+      if (!phone) {
+        showStatus('Please enter your M-Pesa number', 'error');
+        return;
+      }
+      
+      mpesaBtn.disabled = true;
+      mpesaBtn.textContent = 'Processing...';
+      
+      try {
+        const response = await fetch('/pay', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `phone=${encodeURIComponent(phone)}`
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.checkout_id) {
+          showStatus('📱 Check your phone for M-Pesa prompt...', 'pending');
+          pollPaymentStatus(data.checkout_id);
+        } else {
+          showStatus('Error: ' + (data.error || 'Payment failed'), 'error');
+          mpesaBtn.disabled = false;
+          mpesaBtn.textContent = 'Pay with M-Pesa';
+        }
+      } catch (error) {
+        showStatus('Error: ' + error.message, 'error');
+        mpesaBtn.disabled = false;
+        mpesaBtn.textContent = 'Pay with M-Pesa';
+      }
+    });
+    
+    // Stripe payment
+    stripeBtn.addEventListener('click', async () => {
+      stripeBtn.disabled = true;
+      stripeBtn.textContent = 'Redirecting...';
+      
+      try {
+        const response = await fetch('/stripe-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.checkout_url) {
+          window.location.href = data.checkout_url;
+        } else {
+          showStatus('Error: ' + (data.error || 'Payment failed'), 'error');
+          stripeBtn.disabled = false;
+          stripeBtn.textContent = 'Pay with Card';
+        }
+      } catch (error) {
+        showStatus('Error: ' + error.message, 'error');
+        stripeBtn.disabled = false;
+        stripeBtn.textContent = 'Pay with Card';
+      }
+    });
+    
+    // Poll payment status
+    function pollPaymentStatus(checkoutId) {
+      const interval = setInterval(async () => {
+        try {
+          const response = await fetch(`/check-payment/${checkoutId}`);
+          const data = await response.json();
+          
+          if (data.status === 'COMPLETE') {
+            clearInterval(interval);
+            showStatus('✓ Payment successful! Redirecting...', 'pending');
+            setTimeout(() => {
+              window.location.href = data.redirect;
+            }, 1000);
+          } else if (data.status === 'FAILED') {
+            clearInterval(interval);
+            showStatus('Payment failed. Please try again.', 'error');
+            mpesaBtn.disabled = false;
+            mpesaBtn.textContent = 'Pay with M-Pesa';
+          }
+        } catch (error) {
+          clearInterval(interval);
+          showStatus('Error checking payment status', 'error');
+          mpesaBtn.disabled = false;
+          mpesaBtn.textContent = 'Pay with M-Pesa';
+        }
+      }, 3000);
+      
+      // Stop polling after 5 minutes
+      setTimeout(() => {
+        clearInterval(interval);
+        if (mpesaBtn.disabled) {
+          showStatus('Payment timeout. Please try again.', 'error');
+          mpesaBtn.disabled = false;
+          mpesaBtn.textContent = 'Pay with M-Pesa';
+        }
+      }, 300000);
+    }
+    
+    function showStatus(message, type) {
+      status.textContent = message;
+      status.className = 'status show ' + type;
+    }
+  </script>
+</body>
+</html>
