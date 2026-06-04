@@ -1,10 +1,9 @@
 """
-Comprehensive file converter with PDF split/merge - uses only: pypdf, python-docx, pandas, Pillow
+Comprehensive file converter - uses only: pypdf, python-docx, pandas, Pillow
+No PyPDF2, no pdf2docx, no poppler needed.
 """
 import os
 import tempfile
-import zipfile
-import shutil
 
 try:
     from PIL import Image
@@ -43,12 +42,14 @@ def get_supported_outputs(input_ext):
     ext = input_ext.lower().strip('.')
 
     image_formats = ['jpg', 'png', 'webp', 'bmp', 'gif', 'tiff', 'ico']
+    doc_formats = ['txt', 'html', 'md', 'docx']
+    sheet_formats = ['csv', 'xlsx', 'json']
 
     if ext in ['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'tiff', 'ico']:
         return [f for f in image_formats if f != ext and f != 'jpeg']
 
     if ext == 'pdf':
-        return ['txt', 'html', 'md', 'docx', 'split']  # Added split
+        return ['txt', 'html', 'md', 'docx']
 
     if ext == 'docx':
         return ['txt', 'html', 'md', 'pdf']
@@ -65,7 +66,7 @@ def get_supported_outputs(input_ext):
     if ext == 'html':
         return ['txt', 'md', 'docx']
 
-    if ext == 'csv':
+    if ext in ['csv']:
         return ['xlsx', 'json', 'html', 'txt']
 
     if ext in ['xlsx', 'xls']:
@@ -77,34 +78,32 @@ def get_supported_outputs(input_ext):
     return []
 
 
-def convert_file(input_path, output_format, merge_paths=None):
+def convert_file(input_path, output_format):
     """
     Convert input_path to output_format.
-    For merge: merge_paths is list of additional PDF paths to merge with input_path
     Returns path to the converted file (caller must delete it).
+    Raises ValueError for unsupported conversions.
+    Raises RuntimeError for conversion failures.
     """
     if not os.path.exists(input_path):
         raise ValueError("Input file not found.")
 
     input_ext = os.path.splitext(input_path)[1].lower().strip('.')
-    out_fmt   = output_format.lower().strip('.')
+    out_fmt = output_format.lower().strip('.')
 
-    # Normalize jpeg -> jpg
+    # Normalize jpeg->jpg
     if out_fmt == 'jpeg':
         out_fmt = 'jpg'
     if input_ext == 'jpeg':
         input_ext = 'jpg'
 
+    # Route to the right converter
     image_exts = {'jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'tiff', 'ico'}
 
     if input_ext in image_exts:
         return _image_to_image(input_path, out_fmt)
 
     if input_ext == 'pdf':
-        if out_fmt == 'split':
-            return _split_pdf(input_path)
-        if out_fmt == 'merge':
-            return _merge_pdf([input_path] + (merge_paths or []))
         return _pdf_convert(input_path, out_fmt)
 
     if input_ext == 'docx':
@@ -133,7 +132,7 @@ def _image_to_image(input_path, out_fmt):
 
     pil_fmt_map = {
         'jpg': 'JPEG', 'png': 'PNG', 'webp': 'WEBP',
-        'bmp': 'BMP',  'gif': 'GIF', 'tiff': 'TIFF', 'ico': 'ICO'
+        'bmp': 'BMP', 'gif': 'GIF', 'tiff': 'TIFF', 'ico': 'ICO'
     }
 
     if out_fmt not in pil_fmt_map:
@@ -141,9 +140,11 @@ def _image_to_image(input_path, out_fmt):
 
     img = Image.open(input_path)
 
+    # ICO size limit
     if out_fmt == 'ico':
         img = img.resize((256, 256), Image.LANCZOS)
 
+    # JPEG needs RGB
     if out_fmt == 'jpg' and img.mode in ('RGBA', 'P', 'LA'):
         img = img.convert('RGB')
 
@@ -156,79 +157,21 @@ def _image_to_image(input_path, out_fmt):
 # ── PDF CONVERSIONS ────────────────────────────────────────────────────────────
 
 def _extract_pdf_text(input_path):
+    """Extract all text from a PDF using pypdf."""
     if not PYPDF_AVAILABLE:
         raise RuntimeError("pypdf is not installed. Run: pip install pypdf")
     reader = pypdf.PdfReader(input_path)
-    pages  = []
+    pages = []
     for i, page in enumerate(reader.pages):
         text = page.extract_text() or ''
         pages.append(f"--- Page {i+1} ---\n{text}")
     return '\n\n'.join(pages)
 
 
-def _split_pdf(input_path):
-    """Split PDF into individual page PDFs, return ZIP file."""
-    if not PYPDF_AVAILABLE:
-        raise RuntimeError("pypdf is not installed. Run: pip install pypdf")
-    
-    reader = pypdf.PdfReader(input_path)
-    num_pages = len(reader.pages)
-    
-    if num_pages < 1:
-        raise ValueError("PDF is empty.")
-    
-    temp_dir = tempfile.mkdtemp()
-    zip_path = tempfile.NamedTemporaryFile(delete=False, suffix='.zip').name
-    
-    try:
-        for i, page in enumerate(reader.pages, 1):
-            writer = pypdf.PdfWriter()
-            writer.add_page(page)
-            page_path = os.path.join(temp_dir, f'page_{i:03d}.pdf')
-            with open(page_path, 'wb') as f:
-                writer.write(f)
-        
-        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-            for i in range(1, num_pages + 1):
-                page_file = os.path.join(temp_dir, f'page_{i:03d}.pdf')
-                zf.write(page_file, arcname=f'page_{i:03d}.pdf')
-        
-        return zip_path
-    finally:
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir, ignore_errors=True)
-
-
-def _merge_pdf(input_paths):
-    """Merge multiple PDFs into one."""
-    if not PYPDF_AVAILABLE:
-        raise RuntimeError("pypdf is not installed. Run: pip install pypdf")
-    
-    if not input_paths or len(input_paths) < 1:
-        raise ValueError("At least 1 PDF file is required.")
-    
-    writer = pypdf.PdfWriter()
-    
-    for pdf_path in input_paths:
-        if not os.path.exists(pdf_path):
-            raise ValueError(f"File not found: {pdf_path}")
-        reader = pypdf.PdfReader(pdf_path)
-        for page in reader.pages:
-            writer.add_page(page)
-    
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-    tmp.close()
-    
-    with open(tmp.name, 'wb') as f:
-        writer.write(f)
-    
-    return tmp.name
-
-
 def _pdf_convert(input_path, out_fmt):
     if out_fmt == 'txt':
         text = _extract_pdf_text(input_path)
-        tmp  = tempfile.NamedTemporaryFile(delete=False, suffix='.txt', mode='w', encoding='utf-8')
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.txt', mode='w', encoding='utf-8')
         tmp.write(text)
         tmp.close()
         return tmp.name
@@ -244,19 +187,17 @@ def _pdf_convert(input_path, out_fmt):
                 html_lines.append(f'<h2 style="color:#0F6E56;border-bottom:1px solid #ccc;">{stripped}</h2>')
             else:
                 html_lines.append(f'<p>{stripped}</p>')
-        html = (
-            '<!DOCTYPE html><html><head><meta charset="UTF-8">'
-            '<style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;'
-            'color:#333;line-height:1.6}h2{margin-top:2em}</style>'
-            f'</head><body>{"".join(html_lines)}</body></html>'
-        )
+        html = f"""<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>body{{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;color:#333;line-height:1.6}}h2{{margin-top:2em}}</style>
+</head><body>{''.join(html_lines)}</body></html>"""
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.html', mode='w', encoding='utf-8')
         tmp.write(html)
         tmp.close()
         return tmp.name
 
     if out_fmt == 'md':
-        text     = _extract_pdf_text(input_path)
+        text = _extract_pdf_text(input_path)
         md_lines = []
         for line in text.splitlines():
             stripped = line.strip()
@@ -276,7 +217,7 @@ def _pdf_convert(input_path, out_fmt):
         if not DOCX_AVAILABLE:
             raise RuntimeError("python-docx is not installed. Run: pip install python-docx")
         text = _extract_pdf_text(input_path)
-        doc  = Document()
+        doc = Document()
         doc.add_heading('Converted from PDF', 0)
         for line in text.splitlines():
             stripped = line.strip()
@@ -298,14 +239,8 @@ def _docx_convert(input_path, out_fmt):
     if not DOCX_AVAILABLE:
         raise RuntimeError("python-docx is not installed. Run: pip install python-docx")
 
-    doc        = Document(input_path)
+    doc = Document(input_path)
     paragraphs = [p.text for p in doc.paragraphs]
-
-    def _style(p):
-        try:
-            return (p.style.name or '').lower()
-        except Exception:
-            return ''
 
     if out_fmt == 'txt':
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.txt', mode='w', encoding='utf-8')
@@ -319,7 +254,7 @@ def _docx_convert(input_path, out_fmt):
             text = p.text.strip()
             if not text:
                 continue
-            style = _style(p)
+            style = p.style.name.lower()
             if 'heading 1' in style:
                 html_lines.append(f'<h1>{text}</h1>')
             elif 'heading 2' in style:
@@ -328,12 +263,10 @@ def _docx_convert(input_path, out_fmt):
                 html_lines.append(f'<h3>{text}</h3>')
             else:
                 html_lines.append(f'<p>{text}</p>')
-        html = (
-            '<!DOCTYPE html><html><head><meta charset="UTF-8">'
-            '<style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;'
-            'color:#333;line-height:1.6}</style>'
-            f'</head><body>{"".join(html_lines)}</body></html>'
-        )
+        html = f"""<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>body{{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;color:#333;line-height:1.6}}</style>
+</head><body>{''.join(html_lines)}</body></html>"""
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.html', mode='w', encoding='utf-8')
         tmp.write(html)
         tmp.close()
@@ -346,7 +279,7 @@ def _docx_convert(input_path, out_fmt):
             if not text:
                 md_lines.append('')
                 continue
-            style = _style(p)
+            style = p.style.name.lower()
             if 'heading 1' in style:
                 md_lines.append(f'# {text}')
             elif 'heading 2' in style:
@@ -361,33 +294,19 @@ def _docx_convert(input_path, out_fmt):
         return tmp.name
 
     if out_fmt == 'pdf':
+        # Render via WeasyPrint if available
         try:
             from weasyprint import HTML as WP_HTML
-        except ImportError:
-            raise RuntimeError("WeasyPrint required for DOCX→PDF. Run: pip install weasyprint")
-        html_path = None
-        pdf_tmp   = None
-        try:
             html_path = _docx_convert(input_path, 'html')
             with open(html_path, 'r', encoding='utf-8') as f:
                 html_content = f.read()
-            pdf_tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-            pdf_tmp.close()
-            WP_HTML(string=html_content).write_pdf(pdf_tmp.name)
-            return pdf_tmp.name
-        except Exception:
-            if pdf_tmp and os.path.exists(pdf_tmp.name):
-                try:
-                    os.unlink(pdf_tmp.name)
-                except OSError:
-                    pass
-            raise
-        finally:
-            if html_path and os.path.exists(html_path):
-                try:
-                    os.unlink(html_path)
-                except OSError:
-                    pass
+            os.unlink(html_path)
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+            tmp.close()
+            WP_HTML(string=html_content).write_pdf(tmp.name)
+            return tmp.name
+        except ImportError:
+            raise RuntimeError("WeasyPrint is required for DOCX to PDF. Run: pip install weasyprint")
 
     raise ValueError(f"DOCX to '{out_fmt}' is not supported.")
 
@@ -400,12 +319,10 @@ def _txt_convert(input_path, out_fmt):
 
     if out_fmt == 'html':
         lines = [f'<p>{line}</p>' if line.strip() else '<br>' for line in text.splitlines()]
-        html  = (
-            '<!DOCTYPE html><html><head><meta charset="UTF-8">'
-            '<style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;'
-            'color:#333;line-height:1.6}</style>'
-            f'</head><body>{"".join(lines)}</body></html>'
-        )
+        html = f"""<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>body{{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;color:#333;line-height:1.6}}</style>
+</head><body>{''.join(lines)}</body></html>"""
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.html', mode='w', encoding='utf-8')
         tmp.write(html)
         tmp.close()
@@ -431,18 +348,14 @@ def _txt_convert(input_path, out_fmt):
     if out_fmt == 'pdf':
         try:
             from weasyprint import HTML as WP_HTML
+            html_lines = [f'<p>{line}</p>' if line.strip() else '<br>' for line in text.splitlines()]
+            html = f"<html><body style='font-family:Arial;padding:2cm'>{''.join(html_lines)}</body></html>"
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+            tmp.close()
+            WP_HTML(string=html).write_pdf(tmp.name)
+            return tmp.name
         except ImportError:
-            raise RuntimeError("WeasyPrint required for TXT→PDF. Run: pip install weasyprint")
-        html_lines = [f'<p>{line}</p>' if line.strip() else '<br>' for line in text.splitlines()]
-        html = (
-            "<html><body style='font-family:Arial;padding:2cm;line-height:1.6'>"
-            + ''.join(html_lines)
-            + "</body></html>"
-        )
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-        tmp.close()
-        WP_HTML(string=html).write_pdf(tmp.name)
-        return tmp.name
+            raise RuntimeError("WeasyPrint required for TXT to PDF.")
 
     raise ValueError(f"TXT to '{out_fmt}' is not supported.")
 
@@ -458,44 +371,41 @@ def _md_convert(input_path, out_fmt):
             import markdown as md_lib
             html_body = md_lib.markdown(text)
         except ImportError:
+            # Fallback: basic line conversion
             html_body = ''.join(f'<p>{line}</p>' for line in text.splitlines() if line.strip())
-        html = (
-            '<!DOCTYPE html><html><head><meta charset="UTF-8">'
-            '<style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;'
-            'color:#333;line-height:1.6}</style>'
-            f'</head><body>{html_body}</body></html>'
-        )
+        html = f"""<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>body{{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;color:#333;line-height:1.6}}</style>
+</head><body>{html_body}</body></html>"""
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.html', mode='w', encoding='utf-8')
         tmp.write(html)
         tmp.close()
         return tmp.name
 
     if out_fmt == 'txt':
+        # Strip markdown syntax crudely
         import re
         clean = re.sub(r'#{1,6}\s', '', text)
         clean = re.sub(r'\*\*(.+?)\*\*', r'\1', clean)
-        clean = re.sub(r'\*(.+?)\*',     r'\1', clean)
-        clean = re.sub(r'`(.+?)`',       r'\1', clean)
+        clean = re.sub(r'\*(.+?)\*', r'\1', clean)
+        clean = re.sub(r'`(.+?)`', r'\1', clean)
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.txt', mode='w', encoding='utf-8')
         tmp.write(clean)
         tmp.close()
         return tmp.name
 
     if out_fmt == 'docx':
+        html_path = _md_convert(input_path, 'html')
+        # Convert the HTML to DOCX
         if not DOCX_AVAILABLE:
             raise RuntimeError("python-docx is not installed.")
+        with open(html_path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        os.unlink(html_path)
+        # Simple: strip tags and put in docx
         import re
-        html_path = _md_convert(input_path, 'html')
-        try:
-            with open(html_path, 'r', encoding='utf-8') as f:
-                html_content = f.read()
-        finally:
-            try:
-                os.unlink(html_path)
-            except OSError:
-                pass
         clean = re.sub(r'<[^>]+>', '', html_content)
-        doc   = Document()
+        doc = Document()
         for line in clean.splitlines():
             if line.strip():
                 doc.add_paragraph(line.strip())
@@ -529,8 +439,9 @@ def _html_convert(input_path, out_fmt):
         return tmp.name
 
     if out_fmt == 'md':
+        text = strip_tags(html_content)
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.md', mode='w', encoding='utf-8')
-        tmp.write(strip_tags(html_content))
+        tmp.write(text)
         tmp.close()
         return tmp.name
 
@@ -538,7 +449,7 @@ def _html_convert(input_path, out_fmt):
         if not DOCX_AVAILABLE:
             raise RuntimeError("python-docx is not installed.")
         text = strip_tags(html_content)
-        doc  = Document()
+        doc = Document()
         for line in text.splitlines():
             if line.strip():
                 doc.add_paragraph(line.strip())
@@ -556,6 +467,7 @@ def _spreadsheet_convert(input_path, input_ext, out_fmt):
     if not PANDAS_AVAILABLE:
         raise RuntimeError("pandas is not installed. Run: pip install pandas openpyxl")
 
+    # Load
     if input_ext == 'csv':
         df = pd.read_csv(input_path)
     elif input_ext in ('xlsx', 'xls'):
@@ -575,15 +487,17 @@ def _spreadsheet_convert(input_path, input_ext, out_fmt):
     elif out_fmt == 'json':
         df.to_json(tmp.name, orient='records', indent=2)
     elif out_fmt == 'html':
-        html = (
-            '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
-            'body{font-family:Arial,sans-serif;padding:20px}'
-            'table{border-collapse:collapse;width:100%}'
-            'th{background:#0F6E56;color:white;padding:8px 12px;text-align:left}'
-            'td{border:1px solid #ddd;padding:8px 12px}'
-            'tr:nth-child(even){background:#f9f9f9}'
-            f'</style></head><body>{df.to_html(index=False, border=0)}</body></html>'
-        )
+        html = f"""<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>
+body{{font-family:Arial,sans-serif;padding:20px}}
+table{{border-collapse:collapse;width:100%}}
+th{{background:#0F6E56;color:white;padding:8px 12px;text-align:left}}
+td{{border:1px solid #ddd;padding:8px 12px}}
+tr:nth-child(even){{background:#f9f9f9}}
+</style></head><body>
+{df.to_html(index=False, border=0)}
+</body></html>"""
         with open(tmp.name, 'w', encoding='utf-8') as f:
             f.write(html)
     elif out_fmt == 'txt':
