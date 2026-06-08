@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ConverterPro — Professional CV Builder & File Converter</title>
+  <title>ConverterPro — Free CV Builder & File Converter</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
   
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
@@ -22,6 +22,7 @@
       --muted:       #6B7280;
       --border:      #E5E7EB;
       --white:       #FFFFFF;
+      --accent:      #FF6B35;
     }
 
     html { scroll-behavior: smooth; }
@@ -38,7 +39,7 @@
     /* ── Navbar ── */
     nav {
       position: sticky; top: 0; z-index: 100;
-      background: rgba(255,255,255,0.95);
+      background: rgba(255,255,255,0.98);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
       padding: 0 5vw;
@@ -50,6 +51,7 @@
       font-size: 1.4rem; font-weight: 800;
       color: var(--green);
       display: flex; align-items: center; gap: 8px;
+      font-family: 'Poppins', sans-serif;
     }
 
     .nav-logo span {
@@ -75,8 +77,8 @@
     }
     .btn-primary:hover {
       background: var(--green-dark);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 16px rgba(15,110,86,0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(15,110,86,0.4);
     }
 
     .btn-large {
@@ -85,9 +87,28 @@
 
     /* ── Hero ── */
     .hero {
-      background: linear-gradient(135deg, #f0faf6 0%, #ffffff 60%);
+      background: linear-gradient(135deg, #f0faf6 0%, #ffffff 100%);
       padding: 100px 5vw 80px;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -40%;
+      right: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(29,158,117,0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
     }
 
     .hero-badge {
@@ -95,9 +116,10 @@
       background: var(--green-pale);
       color: var(--green);
       font-size: 0.82rem; font-weight: 600;
-      padding: 6px 16px; border-radius: 100px;
+      padding: 8px 18px; border-radius: 100px;
       margin-bottom: 1.5rem;
       border: 1px solid rgba(15,110,86,0.2);
+      animation: slideUp 0.6s ease;
     }
 
     .hero h1 {
@@ -107,6 +129,8 @@
       letter-spacing: -1.5px;
       color: var(--text);
       margin-bottom: 1.2rem;
+      font-family: 'Poppins', sans-serif;
+      animation: slideUp 0.6s ease 0.1s both;
     }
 
     .hero h1 span { color: var(--green); }
@@ -114,22 +138,85 @@
     .hero p {
       font-size: 1.15rem;
       color: var(--muted);
-      max-width: 520px;
+      max-width: 540px;
       margin: 0 auto 2.5rem;
+      animation: slideUp 0.6s ease 0.2s both;
     }
 
-    .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .hero-free-badge {
+      display: inline-block;
+      background: rgba(15,110,86,0.1);
+      color: var(--green);
+      padding: 8px 16px;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      animation: slideUp 0.6s ease 0.3s both;
+    }
+
+    .hero-cta { 
+      display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+      animation: slideUp 0.6s ease 0.4s both;
+    }
 
     .hero-stats {
       display: flex; justify-content: center; gap: 3rem;
       margin-top: 4rem; flex-wrap: wrap;
     }
 
-    .hero-stat { text-align: center; }
+    .hero-stat { text-align: center; animation: slideUp 0.6s ease 0.5s both; }
     .hero-stat-num {
       font-size: 1.8rem; font-weight: 800; color: var(--green);
+      font-family: 'Poppins', sans-serif;
     }
     .hero-stat-label { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Features Grid ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      max-width: 900px;
+      margin: 3rem auto 0;
+    }
+
+    .feature-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      border-color: var(--green);
+      box-shadow: 0 8px 24px rgba(15,110,86,0.1);
+      transform: translateY(-3px);
+    }
+
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .feature-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .feature-card p {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
 
     /* ── How it works ── */
     .section { padding: 80px 5vw; }
@@ -142,6 +229,7 @@
       font-size: clamp(1.6rem, 3vw, 2.4rem);
       font-weight: 800; letter-spacing: -0.5px;
       margin-bottom: 0.75rem;
+      font-family: 'Poppins', sans-serif;
     }
     .section-sub {
       font-size: 1rem; color: var(--muted);
@@ -237,6 +325,7 @@
     .template-info { padding: 1.25rem; }
     .template-name {
       font-weight: 700; font-size: 1rem; margin-bottom: 0.3rem;
+      font-family: 'Poppins', sans-serif;
     }
     .template-badge {
       display: inline-block;
@@ -247,41 +336,149 @@
     }
     .template-desc { font-size: 0.85rem; color: var(--muted); }
 
-    /* ── Price section ── */
-    .price-section {
+    /* ── Testimonials ── */
+    .testimonials-section {
+      background: var(--white);
+      padding: 80px 5vw;
+    }
+
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      max-width: 900px;
+    }
+
+    .testimonial-card {
+      background: var(--green-pale);
+      border: 1px solid rgba(15,110,86,0.15);
+      border-radius: 16px;
+      padding: 2rem;
+      position: relative;
+    }
+
+    .testimonial-quote {
+      font-size: 1rem;
+      color: var(--text);
+      margin-bottom: 1.5rem;
+      line-height: 1.7;
+      font-style: italic;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .author-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--green);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+
+    .author-info h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.2rem;
+    }
+
+    .author-info p {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .star-rating {
+      color: #FFB800;
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+      letter-spacing: 2px;
+    }
+
+    /* ── Features Section ── */
+    .all-features-section {
+      background: linear-gradient(135deg, #f0faf6 0%, #ffffff 100%);
+      padding: 80px 5vw;
+    }
+
+    .features-3col {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 2rem;
+      max-width: 900px;
+    }
+
+    .feature-item {
+      text-align: center;
+    }
+
+    .feature-item-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .feature-item h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .feature-item p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── CTA Section ── */
+    .cta-section {
       background: var(--green);
       color: white;
       text-align: center;
       padding: 80px 5vw;
     }
-    .price-section .section-label { color: rgba(255,255,255,0.7); }
-    .price-section .section-title { color: white; }
-    .price-section .section-sub { color: rgba(255,255,255,0.8); margin: 0 auto 2rem; }
 
-    .price-tag {
-      font-size: 4rem; font-weight: 800;
-      margin: 1rem 0;
+    .cta-section .section-title {
+      color: white;
+      margin-bottom: 1rem;
     }
-    .price-tag small { font-size: 1.5rem; font-weight: 400; opacity: 0.8; }
 
-    .price-features {
-      display: flex; justify-content: center; gap: 2rem;
-      flex-wrap: wrap; margin: 2rem 0;
+    .cta-section p {
+      font-size: 1.1rem;
+      max-width: 500px;
+      margin: 0 auto 2rem;
+      opacity: 0.95;
     }
-    .price-feature {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 0.9rem; opacity: 0.9;
+
+    .no-credit-card {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 12px 24px;
+      border-radius: 8px;
+      margin-top: 1.5rem;
+      font-weight: 600;
+      font-size: 0.95rem;
     }
-    .price-feature::before { content: "✓"; font-weight: 700; }
 
     .btn-white {
       background: white; color: var(--green);
       font-weight: 700;
+      margin-top: 1.5rem;
     }
     .btn-white:hover {
       background: var(--green-pale);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
     }
 
     /* ── Footer ── */
@@ -299,7 +496,8 @@
     @media (max-width: 600px) {
       .hero { padding: 60px 5vw 50px; }
       .hero-stats { gap: 1.5rem; }
-      .steps, .template-cards { grid-template-columns: 1fr; }
+      .steps, .template-cards, .testimonials-grid, .features-3col { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -312,35 +510,61 @@
   </a>
   <div style="display: flex; gap: 1rem; align-items: center;">
     <a href="/converter" style="color: var(--text); font-weight: 600;">File Converter</a>
-    <a href="/builder" class="btn btn-primary">Build CV</a>
+    <a href="/builder" class="btn btn-primary">Build Free CV</a>
   </div>
 </nav>
 
 <!-- Hero -->
 <section class="hero">
-  <div class="hero-badge">🌍 Professional Tools for Everyone</div>
-  <h1>Professional CV Builder<br>& <span>File Converter</span></h1>
-  <p>Create stunning CVs and convert any file format. Start FREE or go Premium.</p>
-  <div class="hero-cta">
-    <a href="/builder" class="btn btn-primary btn-large">Start FREE Now</a>
-    <a href="#pricing" class="btn" style="background:#f3f4f6;color:var(--text);">See Pricing</a>
-  </div>
-  <div class="hero-stats">
-    <div class="hero-stat">
-      <div class="hero-stat-num">FREE</div>
-      <div class="hero-stat-label">Basic CV Builder</div>
+  <div class="hero-content">
+    <div class="hero-badge">🌍 Professional Tools for Everyone</div>
+    <h1>Free CV Builder<br>& <span>File Converter</span></h1>
+    <p>Create stunning, ATS-optimized CVs and convert files instantly. Completely free, no credit card required.</p>
+    <div class="hero-free-badge">✨ 100% FREE • No Watermarks • No Limitations</div>
+    <div class="hero-cta">
+      <a href="/builder" class="btn btn-primary btn-large">Build Your Free CV</a>
+      <a href="/converter" class="btn" style="background:#f3f4f6;color:var(--text);border:1px solid var(--border);">Convert Files Free</a>
     </div>
-    <div class="hero-stat">
-      <div class="hero-stat-num">KES 50</div>
-      <div class="hero-stat-label">Premium upgrade</div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-num">∞</div>
+        <div class="hero-stat-label">Free Resumes</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">3</div>
+        <div class="hero-stat-label">Template Styles</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">100K+</div>
+        <div class="hero-stat-label">Users Trusted</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">⚡</div>
+        <div class="hero-stat-label">Instant Download</div>
+      </div>
     </div>
-    <div class="hero-stat">
-      <div class="hero-stat-num">3</div>
-      <div class="hero-stat-label">Professional templates</div>
-    </div>
-    <div class="hero-stat">
-      <div class="hero-stat-num">FREE</div>
-      <div class="hero-stat-label">File converter</div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📄</div>
+        <h3>ATS Checker</h3>
+        <p>Verify your CV is ATS-compatible instantly</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <h3>Resume Parser</h3>
+        <p>Auto-extract data from existing resumes</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <h3>All Devices</h3>
+        <p>Build and download from mobile or desktop</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <h3>Unlimited Edits</h3>
+        <p>Revise your CV as many times as you want</p>
+      </div>
     </div>
   </div>
 </section>
@@ -348,26 +572,26 @@
 <!-- How it works -->
 <section class="section" id="how-it-works">
   <div class="section-label">Simple Process</div>
-  <h2 class="section-title">Three steps to your dream job</h2>
-  <p class="section-sub">No account needed. No subscriptions. Just fill, pay, and download.</p>
+  <h2 class="section-title">Create Your Perfect CV in Minutes</h2>
+  <p class="section-sub">No account needed. No hidden fees. Just fill, customize, and download.</p>
   <div class="steps">
     <div class="step">
       <div class="step-num">1</div>
       <div class="step-icon">✏️</div>
-      <h3>Fill Your Details</h3>
-      <p>Enter your work experience, education, skills, and choose a template. Takes about 5 minutes.</p>
+      <h3>Enter Your Details</h3>
+      <p>Add your work experience, education, skills, and achievements. Our smart form guides you through everything.</p>
     </div>
     <div class="step">
       <div class="step-num">2</div>
-      <div class="step-icon">📱</div>
-      <h3>Choose Your Plan</h3>
-      <p>Start FREE with basic features or upgrade to Premium for KES 50 to unlock all templates and remove watermark.</p>
+      <div class="step-icon">🎨</div>
+      <h3>Choose Your Style</h3>
+      <p>Select from 3 professionally designed templates. All are ATS-friendly and compatible with every job portal.</p>
     </div>
     <div class="step">
       <div class="step-num">3</div>
       <div class="step-icon">⬇️</div>
-      <h3>Download Your CV</h3>
-      <p>Your professional PDF CV downloads instantly after payment. Ready to send to employers.</p>
+      <h3>Download & Apply</h3>
+      <p>Get your PDF instantly with no watermarks. Ready to send to employers or upload to job boards.</p>
     </div>
   </div>
 </section>
@@ -390,8 +614,8 @@
 <!-- Templates -->
 <section class="section templates-section" id="templates">
   <div class="section-label">Choose Your Style</div>
-  <h2 class="section-title">Three professional templates</h2>
-  <p class="section-sub">All templates are ATS-friendly and accepted by global employers.</p>
+  <h2 class="section-title">Professional CV Templates</h2>
+  <p class="section-sub">All templates are completely free and optimized for applicant tracking systems.</p>
   <div class="template-cards">
 
     <div class="template-card" onclick="window.location='/builder'">
@@ -411,7 +635,7 @@
       <div class="template-info">
         <div class="template-name">Classic</div>
         <div class="template-badge">Most Popular</div>
-        <p class="template-desc">Traditional single-column layout. Perfect for corporate, finance, law, and government roles. Maximum ATS compatibility.</p>
+        <p class="template-desc">Traditional single-column layout. Perfect for corporate, finance, law, and government roles.</p>
       </div>
     </div>
 
@@ -438,7 +662,7 @@
       <div class="template-info">
         <div class="template-name">Modern</div>
         <div class="template-badge">Eye-Catching</div>
-        <p class="template-desc">Two-column design with a bold green sidebar. Ideal for business, marketing, sales, and management professionals.</p>
+        <p class="template-desc">Two-column design with bold green sidebar. Ideal for marketing, sales, and creative roles.</p>
       </div>
     </div>
 
@@ -458,7 +682,7 @@
       <div class="template-info">
         <div class="template-name">Minimal</div>
         <div class="template-badge">Clean & Modern</div>
-        <p class="template-desc">Ultra-clean whitespace design. Perfect for tech, design, creative, and startup roles where simplicity signals confidence.</p>
+        <p class="template-desc">Ultra-clean whitespace design. Perfect for tech, design, and startup roles.</p>
       </div>
     </div>
 
@@ -479,49 +703,106 @@
   </script>
 </section>
 
-<!-- Price CTA -->
-<section class="price-section" id="pricing">
-  <div class="section-label">Flexible Pricing</div>
-  <h2 class="section-title">Start FREE. Upgrade Anytime.</h2>
-  <p class="section-sub">No credit card required. No subscriptions. Pay only if you want premium features.</p>
+<!-- Testimonials -->
+<section class="testimonials-section" id="testimonials">
+  <div class="section-label">Real Success Stories</div>
+  <h2 class="section-title">Trusted by Job Seekers Worldwide</h2>
+  <p class="section-sub">See how professionals used ConverterPro to land their dream jobs.</p>
   
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; max-width:900px; margin:2rem auto;">
-    <div style="background:rgba(255,255,255,0.1); padding:2rem; border-radius:16px; border:2px solid rgba(255,255,255,0.3);">
-      <h3 style="font-size:1.5rem; margin-bottom:1rem;">FREE</h3>
-      <div class="price-tag" style="font-size:3rem;">KES 0</div>
-      <div class="price-features" style="flex-direction:column; align-items:flex-start;">
-        <div class="price-feature">Classic Template</div>
-        <div class="price-feature">Standard Quality</div>
-        <div class="price-feature">Small Watermark</div>
-        <div class="price-feature">Instant Download</div>
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="star-rating">★★★★★</div>
+      <p class="testimonial-quote">"ConverterPro helped me create a professional CV in just 10 minutes. I got interview calls within a week!"</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">AK</div>
+        <div class="author-info">
+          <h4>Amara Kipchoge</h4>
+          <p>Product Manager, Nairobi</p>
+        </div>
       </div>
     </div>
-    
-    <div style="background:rgba(255,255,255,0.2); padding:2rem; border-radius:16px; border:3px solid #FFA500; position:relative;">
-      <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:#FFA500; padding:4px 16px; border-radius:20px; font-size:0.75rem; font-weight:700;">POPULAR</div>
-      <h3 style="font-size:1.5rem; margin-bottom:1rem;">PREMIUM</h3>
-      <div class="price-tag" style="font-size:3rem;">KES 50</div>
-      <div class="price-features" style="flex-direction:column; align-items:flex-start;">
-        <div class="price-feature">All 3 Templates</div>
-        <div class="price-feature">High Quality PDF</div>
-        <div class="price-feature">NO Watermark</div>
-        <div class="price-feature">NO Ads</div>
-        <div class="price-feature">Re-download (24hrs)</div>
+
+    <div class="testimonial-card">
+      <div class="star-rating">★★★★★</div>
+      <p class="testimonial-quote">"The ATS checker is amazing! I finally understood why my CV wasn't passing screening systems. Highly recommend!"</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">TM</div>
+        <div class="author-info">
+          <h4>Thomas Mutua</h4>
+          <p>Software Developer, Kampala</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="testimonial-card">
+      <div class="star-rating">★★★★★</div>
+      <p class="testimonial-quote">"No hidden charges, no upselling. Just a clean, simple tool that does exactly what it promises. Perfect!"</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">SN</div>
+        <div class="author-info">
+          <h4>Sarah Njenga</h4>
+          <p>Marketing Specialist, Kenya</p>
+        </div>
       </div>
     </div>
   </div>
+</section>
+
+<!-- All Features Section -->
+<section class="all-features-section" id="features">
+  <div class="section-label">Why ConverterPro</div>
+  <h2 class="section-title">Everything You Need. Completely Free.</h2>
+  <p class="section-sub">We believe great tools shouldn't cost money. Get full access to all features, no strings attached.</p>
   
-  <a href="/builder" class="btn btn-white btn-large">Start Building Now</a>
-  
-  <p style="margin-top:2rem; opacity:0.8; font-size:0.9rem;">💳 Premium: Pay via M-Pesa or Card | 🆓 File Converter: Always FREE</p>
+  <div class="features-3col">
+    <div class="feature-item">
+      <div class="feature-item-icon">📋</div>
+      <h3>Smart CV Builder</h3>
+      <p>Intelligent form fields guide you through creating a compelling, well-structured resume.</p>
+    </div>
+    <div class="feature-item">
+      <div class="feature-item-icon">🤖</div>
+      <h3>ATS Optimization</h3>
+      <p>Automatic checks ensure your CV passes applicant tracking systems and reaches hiring managers.</p>
+    </div>
+    <div class="feature-item">
+      <div class="feature-item-icon">🔄</div>
+      <h3>Resume Parser</h3>
+      <p>Upload your old CV and auto-fill your data. Save time and avoid re-typing everything.</p>
+    </div>
+    <div class="feature-item">
+      <div class="feature-item-icon">🎨</div>
+      <h3>Professional Templates</h3>
+      <p>3 beautifully designed templates suitable for any industry and career level.</p>
+    </div>
+    <div class="feature-item">
+      <div class="feature-item-icon">📁</div>
+      <h3>File Converter</h3>
+      <p>Convert between PDF, Word, and other formats instantly without any limitations.</p>
+    </div>
+    <div class="feature-item">
+      <div class="feature-item-icon">💾</div>
+      <h3>Unlimited Downloads</h3>
+      <p>Create and download as many CVs and documents as you need. No restrictions.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section class="cta-section">
+  <h2 class="section-title">Ready to Land Your Dream Job?</h2>
+  <p>Create your professional CV now. It takes less than 10 minutes and costs absolutely nothing.</p>
+  <div class="no-credit-card">💳 No credit card required</div>
+  <a href="/builder" class="btn btn-white btn-large">Start Building Free CV Now</a>
 </section>
 
 <!-- Footer -->
 <footer>
-  <p>ConverterPro &copy; 2025 | Professional CV Builder & File Converter &nbsp;·&nbsp;
+  <p>ConverterPro &copy; 2025 | Free CV Builder & File Converter &nbsp;·&nbsp;
      <a href="/builder">Build CV</a> &nbsp;·&nbsp;
      <a href="/converter">File Converter</a> &nbsp;·&nbsp;
-     <a href="#how-it-works">How It Works</a>
+     <a href="#how-it-works">How It Works</a> &nbsp;·&nbsp;
+     <a href="#features">Features</a>
   </p>
 </footer>
 
