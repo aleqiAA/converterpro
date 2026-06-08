@@ -33,6 +33,31 @@
       padding: 3rem;
       box-shadow: 0 4px 24px rgba(0,0,0,0.08);
     }
+    /* Merge banner */
+    .merge-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--green-pale);
+      border: 1px solid var(--green);
+      border-radius: 10px;
+      padding: 0.9rem 1.2rem;
+      margin-bottom: 2rem;
+      gap: 1rem;
+    }
+    .merge-banner span { font-size: 0.95rem; color: var(--text); }
+    .merge-banner a {
+      padding: 0.45rem 1rem;
+      background: var(--green);
+      color: white;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .merge-banner a:hover { background: var(--green-light); }
     .upload-area {
       border: 2px dashed var(--border);
       border-radius: 12px;
@@ -130,7 +155,7 @@
       font-weight: 500;
     }
     .status.show { display: block; }
-    .status.error { background: #FEE2E2; color: #DC2626; }
+    .status.error   { background: #FEE2E2; color: #DC2626; }
     .status.success { background: var(--green-pale); color: var(--green); }
     .status.loading { background: #EFF6FF; color: #2563EB; }
     .supported-formats {
@@ -157,37 +182,6 @@
       text-align: center;
     }
     .ad-label { font-size: 0.7rem; color: #999; margin-bottom: 0.5rem; }
-    .merge-files-list {
-      background: #f9f9f9;
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1.5rem;
-      display: none;
-    }
-    .merge-files-list.show { display: block; }
-    .merge-file-item {
-      background: white;
-      padding: 0.75rem;
-      border-radius: 6px;
-      margin-bottom: 0.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.9rem;
-    }
-    .merge-file-item .remove-btn {
-      background: #DC2626;
-      color: white;
-      border: none;
-      padding: 0.3rem 0.6rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-    .merge-file-item .remove-btn:hover {
-      background: #991b1b;
-    }
   </style>
 </head>
 <body>
@@ -199,6 +193,13 @@
     </div>
 
     <div class="converter-card">
+
+      <!-- Merge PDF banner -->
+      <div class="merge-banner">
+        <span>🔗 Want to combine multiple PDFs into one?</span>
+        <a href="/merge">Merge PDFs →</a>
+      </div>
+
       <form id="converterForm" enctype="multipart/form-data">
 
         <div class="upload-area" id="uploadArea">
@@ -206,22 +207,12 @@
           <div class="upload-text">Click to upload or drag &amp; drop</div>
           <div class="upload-hint">Supports images, PDFs, Word docs, Excel files, and more</div>
           <input type="file" id="fileInput" name="file" accept="*/*">
-          <input type="file" id="mergeFilesInput" name="mergeFiles" accept=".pdf" multiple style="display:none;">
         </div>
 
         <div class="file-info" id="fileInfo">
           <div class="file-name" id="fileName"></div>
           <div class="file-size" id="fileSize"></div>
           <span class="file-type-badge" id="fileType"></span>
-        </div>
-
-        <!-- Merge files list (for PDF merge mode) -->
-        <div class="merge-files-list" id="mergeFilesList">
-          <label style="margin-bottom: 0.5rem;">📎 Files to Merge:</label>
-          <div id="mergeFilesContainer"></div>
-          <button type="button" id="addMoreFilesBtn" class="format-btn" style="width:100%;margin-top:0.5rem;">
-            + Add More PDFs
-          </button>
         </div>
 
         <div class="format-selector" id="formatSelector" style="display:none;">
@@ -256,7 +247,7 @@
         </div>
         <div class="format-category">
           <div class="category-title">📄 PDF →</div>
-          <div class="format-list">TXT, HTML, MD, DOCX, SPLIT (into pages), MERGE (combine PDFs)</div>
+          <div class="format-list">TXT, HTML, MD, DOCX</div>
         </div>
         <div class="format-category">
           <div class="category-title">📝 DOCX →</div>
@@ -287,8 +278,8 @@
   </div>
 
   <script>
+    // Merge removed from conversion map — it has its own page now
     const CONVERSION_MAP = {
-      // Images
       jpg:  ['png', 'webp', 'gif', 'bmp', 'tiff', 'ico'],
       jpeg: ['png', 'webp', 'gif', 'bmp', 'tiff', 'ico'],
       png:  ['jpg', 'webp', 'gif', 'bmp', 'tiff', 'ico'],
@@ -297,49 +288,35 @@
       webp: ['jpg', 'png', 'gif', 'bmp', 'tiff'],
       tiff: ['jpg', 'png', 'webp', 'gif', 'bmp'],
       ico:  ['jpg', 'png', 'webp'],
-      // PDF (now includes split and merge)
-      pdf:  ['txt', 'html', 'md', 'docx', 'split', 'merge'],
-      // Word
+      pdf:  ['txt', 'html', 'md', 'docx'],
       docx: ['txt', 'html', 'md', 'pdf'],
       doc:  ['txt'],
-      // Text
       txt:  ['docx', 'html', 'md', 'pdf'],
       md:   ['txt', 'html', 'docx'],
       html: ['txt', 'md', 'docx'],
-      // Spreadsheets
       xlsx: ['csv', 'json', 'html', 'txt'],
       xls:  ['csv', 'json', 'html', 'txt'],
       csv:  ['xlsx', 'json', 'html', 'txt'],
       json: ['csv', 'xlsx', 'html', 'txt'],
     };
 
-    const uploadArea       = document.getElementById('uploadArea');
-    const fileInput        = document.getElementById('fileInput');
-    const mergeFilesInput  = document.getElementById('mergeFilesInput');
-    const fileInfo         = document.getElementById('fileInfo');
-    const fileNameEl       = document.getElementById('fileName');
-    const fileSizeEl       = document.getElementById('fileSize');
-    const fileTypeEl       = document.getElementById('fileType');
-    const formatGrid       = document.getElementById('formatGrid');
-    const formatSel        = document.getElementById('formatSelector');
-    const convertBtn       = document.getElementById('convertBtn');
-    const statusEl         = document.getElementById('status');
+    const uploadArea        = document.getElementById('uploadArea');
+    const fileInput         = document.getElementById('fileInput');
+    const fileInfo          = document.getElementById('fileInfo');
+    const fileNameEl        = document.getElementById('fileName');
+    const fileSizeEl        = document.getElementById('fileSize');
+    const fileTypeEl        = document.getElementById('fileType');
+    const formatGrid        = document.getElementById('formatGrid');
+    const formatSel         = document.getElementById('formatSelector');
+    const convertBtn        = document.getElementById('convertBtn');
+    const statusEl          = document.getElementById('status');
     const outputFormatInput = document.getElementById('outputFormatInput');
-    const mergeFilesList   = document.getElementById('mergeFilesList');
-    const mergeFilesContainer = document.getElementById('mergeFilesContainer');
-    const addMoreFilesBtn   = document.getElementById('addMoreFilesBtn');
 
     let selectedFile   = null;
     let selectedFormat = null;
-    let mergeFiles     = [];
 
-    // ── Upload area ──────────────────────────────────────────────────────────
     uploadArea.addEventListener('click', () => fileInput.click());
-
-    uploadArea.addEventListener('dragover', e => {
-      e.preventDefault();
-      uploadArea.classList.add('dragover');
-    });
+    uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
     uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
     uploadArea.addEventListener('drop', e => {
       e.preventDefault();
@@ -350,37 +327,16 @@
       if (e.target.files.length > 0) handleFile(e.target.files[0]);
     });
 
-    mergeFilesInput.addEventListener('change', e => {
-      if (e.target.files.length > 0) {
-        for (let file of e.target.files) {
-          if (!mergeFiles.find(f => f.name === file.name)) {
-            mergeFiles.push(file);
-          }
-        }
-        updateMergeFilesList();
-      }
-    });
-
-    addMoreFilesBtn.addEventListener('click', e => {
-      e.preventDefault();
-      mergeFilesInput.click();
-    });
-
     function handleFile(file) {
       selectedFile   = file;
       selectedFormat = null;
-      mergeFiles     = [];
       outputFormatInput.value = '';
       convertBtn.disabled = true;
-      mergeFilesList.classList.remove('show');
-
       const ext = file.name.split('.').pop().toLowerCase();
-
       fileNameEl.textContent = file.name;
       fileSizeEl.textContent = formatSize(file.size);
       fileTypeEl.textContent = ext.toUpperCase();
       fileInfo.classList.add('show');
-
       buildFormatButtons(ext);
       hideStatus();
     }
@@ -388,9 +344,7 @@
     function buildFormatButtons(ext) {
       formatGrid.innerHTML = '';
       selectedFormat = null;
-
       const targets = CONVERSION_MAP[ext];
-
       if (!targets || targets.length === 0) {
         formatSel.style.display = 'block';
         formatGrid.innerHTML = `<div class="no-formats">
@@ -400,19 +354,14 @@
         convertBtn.disabled = true;
         return;
       }
-
       formatSel.style.display = 'block';
-
       targets.forEach(fmt => {
         const btn = document.createElement('button');
         btn.type        = 'button';
         btn.className   = 'format-btn';
-        btn.textContent = fmt === 'split' ? '📄 SPLIT' : fmt === 'merge' ? '🔗 MERGE' : fmt.toUpperCase();
+        btn.textContent = fmt.toUpperCase();
         btn.dataset.format = fmt;
-        btn.addEventListener('click', e => {
-          e.preventDefault();
-          selectFormat(fmt, btn);
-        });
+        btn.addEventListener('click', () => selectFormat(fmt, btn));
         formatGrid.appendChild(btn);
       });
     }
@@ -422,100 +371,34 @@
       btn.classList.add('active');
       selectedFormat = fmt;
       outputFormatInput.value = fmt;
-
-      // Show merge UI if merge is selected
-      if (fmt === 'merge') {
-        mergeFilesList.classList.add('show');
-        convertBtn.disabled = false;
-      } else {
-        mergeFilesList.classList.remove('show');
-        convertBtn.disabled = false;
-      }
+      convertBtn.disabled = false;
     }
 
-    function updateMergeFilesList() {
-      mergeFilesContainer.innerHTML = '';
-      mergeFiles.forEach((file, idx) => {
-        const item = document.createElement('div');
-        item.className = 'merge-file-item';
-        item.innerHTML = `
-          <span>${file.name} (${formatSize(file.size)})</span>
-          <button type="button" class="remove-btn" onclick="removeMergeFile(${idx})">Remove</button>
-        `;
-        mergeFilesContainer.appendChild(item);
-      });
-      convertBtn.disabled = mergeFiles.length === 0;
-    }
-
-    window.removeMergeFile = function(idx) {
-      mergeFiles.splice(idx, 1);
-      updateMergeFilesList();
-    };
-
-    // ── Form submit ────────────────────────────────────────────────────────
     document.getElementById('converterForm').addEventListener('submit', async e => {
       e.preventDefault();
-
       if (!selectedFile || !selectedFormat) {
         showStatus('Please select a file and a target format.', 'error');
         return;
       }
-
-      const formData = new FormData(document.getElementById('converterForm'));
-
-      // Add merge files if merging
-      if (selectedFormat === 'merge') {
-        mergeFiles.forEach(file => {
-          formData.append('mergeFiles', file);
-        });
-      }
-
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('output_format', selectedFormat);
       convertBtn.disabled = true;
-      const origText = convertBtn.textContent;
-      convertBtn.textContent = selectedFormat === 'split' || selectedFormat === 'merge' 
-        ? 'Processing...' 
-        : 'Converting…';
-      showStatus(
-        selectedFormat === 'split' 
-          ? 'Splitting PDF into pages...' 
-          : selectedFormat === 'merge'
-          ? 'Merging PDFs...'
-          : 'Converting your file, please wait…',
-        'loading'
-      );
-
+      convertBtn.textContent = 'Converting…';
+      showStatus('Converting your file, please wait…', 'loading');
       try {
-        const response = await fetch('/convert', {
-          method: 'POST',
-          body: formData
-        });
-
+        const response = await fetch('/convert', { method: 'POST', body: formData });
         if (response.ok) {
           const blob = await response.blob();
           const url  = URL.createObjectURL(blob);
           const a    = document.createElement('a');
           a.href     = url;
-
-          // Determine filename
-          if (selectedFormat === 'split') {
-            a.download = selectedFile.name.replace(/\.[^.]+$/, '') + '_split.zip';
-          } else if (selectedFormat === 'merge') {
-            a.download = 'merged_' + Date.now() + '.pdf';
-          } else {
-            a.download = selectedFile.name.replace(/\.[^.]+$/, '') + '.' + selectedFormat;
-          }
-
+          a.download = selectedFile.name.replace(/\.[^.]+$/, '') + '.' + selectedFormat;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
-
-          const msg = selectedFormat === 'split' 
-            ? '✓ PDF split successfully! Your ZIP is downloading.' 
-            : selectedFormat === 'merge'
-            ? '✓ PDFs merged successfully! Your file is downloading.'
-            : '✓ Converted successfully! Your download should start.';
-          showStatus(msg, 'success');
+          showStatus('✓ Converted successfully! Your download should start.', 'success');
         } else {
           let msg = 'Conversion failed.';
           try { const err = await response.json(); msg = err.error || msg; } catch (_) {}
@@ -525,19 +408,18 @@
         showStatus('Network error: ' + err.message, 'error');
       } finally {
         convertBtn.disabled = false;
-        convertBtn.textContent = origText;
+        convertBtn.textContent = 'Convert File';
       }
     });
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
     function showStatus(msg, type) {
       statusEl.textContent = msg;
       statusEl.className   = 'status show ' + type;
     }
     function hideStatus() { statusEl.className = 'status'; }
     function formatSize(bytes) {
-      if (bytes < 1024)        return bytes + ' B';
-      if (bytes < 1048576)     return (bytes / 1024).toFixed(1) + ' KB';
+      if (bytes < 1024)    return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
       return (bytes / 1048576).toFixed(1) + ' MB';
     }
   </script>

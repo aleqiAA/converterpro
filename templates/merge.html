@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merge PDFs — ConverterPro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #0F6E56;
+      --green-light: #1D9E75;
+      --green-pale: #E8F5F0;
+      --text: #1A1A2E;
+      --muted: #6B7280;
+      --border: #E5E7EB;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f0faf6 0%, #ffffff 60%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 3rem; }
+    .logo { font-size: 1.8rem; font-weight: 800; color: var(--green); margin-bottom: 1rem; }
+    h1 { font-size: 2.5rem; font-weight: 800; color: var(--text); margin-bottom: 0.5rem; }
+    .subtitle { font-size: 1.1rem; color: var(--muted); }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 3rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 3rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 2rem;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--green);
+      background: var(--green-pale);
+    }
+    .drop-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .drop-text { font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+    .drop-hint { font-size: 0.9rem; color: var(--muted); }
+    input[type="file"] { display: none; }
+
+    /* File list */
+    .file-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+    .file-list:empty { display: none; }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--green-pale);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+    .file-item .drag-handle {
+      cursor: grab;
+      color: var(--muted);
+      font-size: 1.1rem;
+      user-select: none;
+    }
+    .file-item .file-icon { font-size: 1.2rem; }
+    .file-item .file-name {
+      flex: 1;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-item .file-size { color: var(--muted); font-size: 0.8rem; white-space: nowrap; }
+    .file-item .remove-btn {
+      background: none;
+      border: none;
+      color: #DC2626;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0 0.25rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .file-item.dragging { opacity: 0.4; }
+    .file-item.drag-over { border: 2px solid var(--green); }
+
+    /* Order hint */
+    .order-hint {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    .order-hint.show { display: block; }
+
+    /* Add more button */
+    .add-more-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.2rem;
+      background: white;
+      border: 2px solid var(--green);
+      color: var(--green);
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 2rem;
+    }
+    .add-more-btn:hover { background: var(--green-pale); }
+
+    /* Merge button */
+    .merge-btn {
+      width: 100%;
+      padding: 1rem;
+      background: var(--green);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .merge-btn:hover:not(:disabled) {
+      background: var(--green-light);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(15,110,86,0.3);
+    }
+    .merge-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+    /* Status */
+    .status {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      display: none;
+      font-weight: 500;
+    }
+    .status.show { display: block; }
+    .status.error   { background: #FEE2E2; color: #DC2626; }
+    .status.success { background: var(--green-pale); color: var(--green); }
+    .status.loading { background: #EFF6FF; color: #2563EB; }
+
+    /* Links */
+    .back-link {
+      display: inline-block;
+      margin-top: 2rem;
+      color: var(--green);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .links-row {
+      display: flex;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">ConverterPro</div>
+      <h1>🔗 Merge PDFs</h1>
+      <p class="subtitle">Combine multiple PDF files into one — drag to reorder, then merge</p>
+    </div>
+
+    <div class="card">
+      <!-- Drop zone -->
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon">📄</div>
+        <div class="drop-text">Click to add PDFs or drag &amp; drop</div>
+        <div class="drop-hint">You can add as many PDF files as you want</div>
+      </div>
+      <input type="file" id="fileInput" accept=".pdf" multiple>
+
+      <!-- File list -->
+      <p class="order-hint" id="orderHint">💡 Drag files to reorder them before merging</p>
+      <div class="file-list" id="fileList"></div>
+
+      <!-- Add more -->
+      <button type="button" class="add-more-btn" id="addMoreBtn" style="display:none;">
+        + Add more PDFs
+      </button>
+
+      <!-- Merge -->
+      <button type="button" class="merge-btn" id="mergeBtn" disabled>
+        Merge PDFs
+      </button>
+
+      <div class="status" id="status"></div>
+
+      <div class="links-row">
+        <a href="/converter" class="back-link">← File Converter</a>
+        <a href="/" class="back-link">← Back to Home</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dropZone   = document.getElementById('dropZone');
+    const fileInput  = document.getElementById('fileInput');
+    const fileList   = document.getElementById('fileList');
+    const mergeBtn   = document.getElementById('mergeBtn');
+    const addMoreBtn = document.getElementById('addMoreBtn');
+    const statusEl   = document.getElementById('status');
+    const orderHint  = document.getElementById('orderHint');
+
+    let files = [];   // array of File objects, order = merge order
+    let dragSrcIndex = null;
+
+    // ── Drop zone ─────────────────────────────────────────────────────────────
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      addFiles(Array.from(e.dataTransfer.files));
+    });
+    fileInput.addEventListener('change', e => {
+      addFiles(Array.from(e.target.files));
+      fileInput.value = '';
+    });
+
+    addMoreBtn.addEventListener('click', () => fileInput.click());
+
+    // ── Add files ─────────────────────────────────────────────────────────────
+    function addFiles(newFiles) {
+      newFiles.forEach(f => {
+        if (!f.name.toLowerCase().endsWith('.pdf')) return;
+        if (files.find(x => x.name === f.name && x.size === f.size)) return;
+        files.push(f);
+      });
+      renderList();
+    }
+
+    // ── Render file list ──────────────────────────────────────────────────────
+    function renderList() {
+      fileList.innerHTML = '';
+
+      files.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.draggable = true;
+        item.dataset.index = index;
+        item.innerHTML = `
+          <span class="drag-handle" title="Drag to reorder">☰</span>
+          <span class="file-icon">📄</span>
+          <span class="file-name" title="${file.name}">${file.name}</span>
+          <span class="file-size">${formatSize(file.size)}</span>
+          <button type="button" class="remove-btn" data-index="${index}" title="Remove">✕</button>
+        `;
+
+        // Drag to reorder
+        item.addEventListener('dragstart', e => {
+          dragSrcIndex = index;
+          setTimeout(() => item.classList.add('dragging'), 0);
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        item.addEventListener('dragend', () => item.classList.remove('dragging'));
+        item.addEventListener('dragover', e => {
+          e.preventDefault();
+          item.classList.add('drag-over');
+        });
+        item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+        item.addEventListener('drop', e => {
+          e.preventDefault();
+          item.classList.remove('drag-over');
+          if (dragSrcIndex === null || dragSrcIndex === index) return;
+          const moved = files.splice(dragSrcIndex, 1)[0];
+          files.splice(index, 0, moved);
+          dragSrcIndex = null;
+          renderList();
+        });
+
+        // Remove
+        item.querySelector('.remove-btn').addEventListener('click', () => {
+          files.splice(index, 1);
+          renderList();
+        });
+
+        fileList.appendChild(item);
+      });
+
+      const hasFiles = files.length > 0;
+      mergeBtn.disabled = files.length < 2;
+      addMoreBtn.style.display = hasFiles ? 'inline-flex' : 'none';
+      orderHint.classList.toggle('show', files.length >= 2);
+      mergeBtn.textContent = files.length < 2
+        ? `Merge PDFs ${files.length > 0 ? '(add at least 2)' : ''}`
+        : `Merge ${files.length} PDFs`;
+    }
+
+    // ── Merge ─────────────────────────────────────────────────────────────────
+    mergeBtn.addEventListener('click', async () => {
+      if (files.length < 2) return;
+
+      const formData = new FormData();
+      // First file goes as 'file', rest as 'mergeFiles'
+      formData.append('file', files[0]);
+      for (let i = 1; i < files.length; i++) {
+        formData.append('mergeFiles', files[i]);
+      }
+      formData.append('output_format', 'merge');
+
+      mergeBtn.disabled = true;
+      mergeBtn.textContent = 'Merging…';
+      showStatus('Merging your PDFs, please wait…', 'loading');
+
+      try {
+        const response = await fetch('/convert', { method: 'POST', body: formData });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url  = URL.createObjectURL(blob);
+          const a    = document.createElement('a');
+          a.href     = url;
+          a.download = 'merged.pdf';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showStatus('✓ Merged successfully! Your download should start.', 'success');
+        } else {
+          let msg = 'Merge failed.';
+          try { const err = await response.json(); msg = err.error || msg; } catch (_) {}
+          showStatus('Error: ' + msg, 'error');
+        }
+      } catch (err) {
+        showStatus('Network error: ' + err.message, 'error');
+      } finally {
+        mergeBtn.disabled = files.length < 2;
+        mergeBtn.textContent = `Merge ${files.length} PDFs`;
+      }
+    });
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function showStatus(msg, type) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status show ' + type;
+    }
+    function formatSize(bytes) {
+      if (bytes < 1024)    return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+  </script>
+</body>
+</html>

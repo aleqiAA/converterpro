@@ -15,7 +15,6 @@ from ai_features import (
     QR_AVAILABLE, OPENAI_AVAILABLE,
 )
 
-# Try to import WeasyPrint
 try:
     from weasyprint import HTML
     WEASYPRINT_AVAILABLE = True
@@ -96,7 +95,6 @@ def generate_pdf(cv_data: dict, template_name: str) -> str:
             "Created with ConverterPro.com</div>"
         )
         html_string = html_string.replace("</body>", watermark + "</body>")
-    # Optionally inject QR code if LinkedIn URL present
     if QR_AVAILABLE and cv_data.get("linkedin"):
         try:
             qr_b64 = generate_qr_b64(cv_data["linkedin"])
@@ -390,6 +388,11 @@ def converter():
     return render_template("converter.html")
 
 
+@app.route("/merge")
+def merge():
+    return render_template("merge.html")
+
+
 @app.route("/convert", methods=["POST"])
 def convert():
     if "file" not in request.files:
@@ -406,36 +409,46 @@ def convert():
     input_ext = os.path.splitext(uploaded.filename)[1]
     tmp_input_path = None
     output_path    = None
+    merge_paths    = []
 
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=input_ext) as tmp_input:
             tmp_input_path = tmp_input.name
         uploaded.save(tmp_input_path)
 
-        output_path = convert_file(tmp_input_path, output_format)
+        if output_format == 'merge' and 'mergeFiles' in request.files:
+            for f in request.files.getlist('mergeFiles'):
+                if f.filename:
+                    merge_tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+                    merge_tmp.close()
+                    f.save(merge_tmp.name)
+                    merge_paths.append(merge_tmp.name)
+
+        output_path = convert_file(tmp_input_path, output_format, merge_paths=merge_paths)
 
         with open(output_path, "rb") as f:
             file_bytes = f.read()
 
         base_name     = os.path.splitext(uploaded.filename)[0]
-        download_name = f"{base_name}.{output_format}"
+        download_name = f"{base_name}_merged.pdf" if output_format == 'merge' else f"{base_name}.{output_format}"
 
         mime_map = {
-            "pdf":  "application/pdf",
-            "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "txt":  "text/plain",
-            "html": "text/html",
-            "md":   "text/markdown",
-            "csv":  "text/csv",
-            "json": "application/json",
-            "png":  "image/png",
-            "jpg":  "image/jpeg",
-            "gif":  "image/gif",
-            "bmp":  "image/bmp",
-            "webp": "image/webp",
-            "tiff": "image/tiff",
-            "ico":  "image/x-icon",
+            "pdf":   "application/pdf",
+            "merge": "application/pdf",
+            "docx":  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "xlsx":  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "txt":   "text/plain",
+            "html":  "text/html",
+            "md":    "text/markdown",
+            "csv":   "text/csv",
+            "json":  "application/json",
+            "png":   "image/png",
+            "jpg":   "image/jpeg",
+            "gif":   "image/gif",
+            "bmp":   "image/bmp",
+            "webp":  "image/webp",
+            "tiff":  "image/tiff",
+            "ico":   "image/x-icon",
         }
         mime = mime_map.get(output_format, "application/octet-stream")
         return send_file(
@@ -450,7 +463,7 @@ def convert():
     except Exception as e:
         return jsonify({"error": f"Conversion failed: {str(e)}"}), 500
     finally:
-        for path in (tmp_input_path, output_path):
+        for path in [tmp_input_path, output_path] + merge_paths:
             if path:
                 try:
                     os.unlink(path)
