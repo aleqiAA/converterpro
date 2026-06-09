@@ -1,5 +1,6 @@
 """
-Comprehensive file converter with PDF split/merge - uses only: pypdf, python-docx, pandas, Pillow
+Comprehensive file converter - pypdf, pdfplumber, python-docx, pandas, Pillow
+Features: convert, merge, split, compress, rotate, jpg<->pdf, protect, unlock
 """
 import os
 import tempfile
@@ -14,9 +15,16 @@ except ImportError:
 
 try:
     import pypdf
+    from pypdf import PdfWriter, PdfReader
     PYPDF_AVAILABLE = True
 except ImportError:
     PYPDF_AVAILABLE = False
+
+try:
+    import pdfplumber
+    PDFPLUMBER_AVAILABLE = True
+except ImportError:
+    PDFPLUMBER_AVAILABLE = False
 
 try:
     from docx import Document
@@ -39,57 +47,38 @@ except ImportError:
 
 
 def get_supported_outputs(input_ext):
-    """Return list of supported output formats for a given input extension."""
     ext = input_ext.lower().strip('.')
-
     image_formats = ['jpg', 'png', 'webp', 'bmp', 'gif', 'tiff', 'ico']
-
     if ext in ['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'tiff', 'ico']:
-        return [f for f in image_formats if f != ext and f != 'jpeg']
-
+        return [f for f in image_formats if f != ext and f != 'jpeg'] + ['pdf']
     if ext == 'pdf':
-        return ['txt', 'html', 'md', 'docx', 'split']  # Added split
-
+        return ['txt', 'html', 'md', 'docx', 'jpg', 'split', 'compress', 'rotate_90', 'rotate_180', 'rotate_270']
     if ext == 'docx':
         return ['txt', 'html', 'md', 'pdf']
-
     if ext == 'doc':
         return ['txt']
-
     if ext == 'txt':
         return ['docx', 'html', 'md', 'pdf']
-
     if ext == 'md':
         return ['html', 'txt', 'docx']
-
     if ext == 'html':
         return ['txt', 'md', 'docx']
-
     if ext == 'csv':
         return ['xlsx', 'json', 'html', 'txt']
-
     if ext in ['xlsx', 'xls']:
         return ['csv', 'json', 'html', 'txt']
-
     if ext == 'json':
         return ['csv', 'xlsx', 'html', 'txt']
-
     return []
 
 
-def convert_file(input_path, output_format, merge_paths=None):
-    """
-    Convert input_path to output_format.
-    For merge: merge_paths is list of additional PDF paths to merge with input_path
-    Returns path to the converted file (caller must delete it).
-    """
+def convert_file(input_path, output_format, merge_paths=None, password=None):
     if not os.path.exists(input_path):
         raise ValueError("Input file not found.")
 
     input_ext = os.path.splitext(input_path)[1].lower().strip('.')
-    out_fmt   = output_format.lower().strip('.')
+    out_fmt   = output_format.lower().strip()
 
-    # Normalize jpeg -> jpg
     if out_fmt == 'jpeg':
         out_fmt = 'jpg'
     if input_ext == 'jpeg':
@@ -97,28 +86,42 @@ def convert_file(input_path, output_format, merge_paths=None):
 
     image_exts = {'jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'tiff', 'ico'}
 
+    # ── PDF-specific operations ──────────────────────────────────────────────
+    if out_fmt == 'merge':
+        return _merge_pdf([input_path] + (merge_paths or []))
+    if out_fmt == 'split':
+        return _split_pdf(input_path)
+    if out_fmt == 'compress':
+        return _compress_pdf(input_path)
+    if out_fmt in ('rotate_90', 'rotate_180', 'rotate_270'):
+        angle = int(out_fmt.split('_')[1])
+        return _rotate_pdf(input_path, angle)
+    if out_fmt == 'protect':
+        return _protect_pdf(input_path, password or '')
+    if out_fmt == 'unlock':
+        return _unlock_pdf(input_path, password or '')
+
+    # ── Image → PDF ──────────────────────────────────────────────────────────
+    if input_ext in image_exts and out_fmt == 'pdf':
+        return _image_to_pdf(input_path)
+
+    # ── PDF → JPG ────────────────────────────────────────────────────────────
+    if input_ext == 'pdf' and out_fmt == 'jpg':
+        return _pdf_to_jpg(input_path)
+
+    # ── Standard conversions ─────────────────────────────────────────────────
     if input_ext in image_exts:
         return _image_to_image(input_path, out_fmt)
-
     if input_ext == 'pdf':
-        if out_fmt == 'split':
-            return _split_pdf(input_path)
-        if out_fmt == 'merge':
-            return _merge_pdf([input_path] + (merge_paths or []))
         return _pdf_convert(input_path, out_fmt)
-
     if input_ext == 'docx':
         return _docx_convert(input_path, out_fmt)
-
     if input_ext == 'txt':
         return _txt_convert(input_path, out_fmt)
-
     if input_ext == 'md':
         return _md_convert(input_path, out_fmt)
-
     if input_ext == 'html':
         return _html_convert(input_path, out_fmt)
-
     if input_ext in {'csv', 'xlsx', 'xls', 'json'}:
         return _spreadsheet_convert(input_path, input_ext, out_fmt)
 
@@ -130,98 +133,212 @@ def convert_file(input_path, output_format, merge_paths=None):
 def _image_to_image(input_path, out_fmt):
     if not PIL_AVAILABLE:
         raise RuntimeError("Pillow is not installed. Run: pip install Pillow")
-
     pil_fmt_map = {
         'jpg': 'JPEG', 'png': 'PNG', 'webp': 'WEBP',
-        'bmp': 'BMP',  'gif': 'GIF', 'tiff': 'TIFF', 'ico': 'ICO'
+        'bmp': 'BMP', 'gif': 'GIF', 'tiff': 'TIFF', 'ico': 'ICO'
     }
-
     if out_fmt not in pil_fmt_map:
         raise ValueError(f"Cannot convert image to '{out_fmt}'.")
-
     img = Image.open(input_path)
-
     if out_fmt == 'ico':
         img = img.resize((256, 256), Image.LANCZOS)
-
     if out_fmt == 'jpg' and img.mode in ('RGBA', 'P', 'LA'):
         img = img.convert('RGB')
-
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=f'.{out_fmt}')
     tmp.close()
     img.save(tmp.name, pil_fmt_map[out_fmt])
     return tmp.name
 
 
-# ── PDF CONVERSIONS ────────────────────────────────────────────────────────────
+def _image_to_pdf(input_path):
+    if not PIL_AVAILABLE:
+        raise RuntimeError("Pillow is not installed. Run: pip install Pillow")
+    img = Image.open(input_path)
+    if img.mode in ('RGBA', 'P', 'LA'):
+        img = img.convert('RGB')
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+    tmp.close()
+    img.save(tmp.name, 'PDF', resolution=100.0)
+    return tmp.name
 
-def _extract_pdf_text(input_path):
-    if not PYPDF_AVAILABLE:
-        raise RuntimeError("pypdf is not installed. Run: pip install pypdf")
-    reader = pypdf.PdfReader(input_path)
-    pages  = []
-    for i, page in enumerate(reader.pages):
-        text = page.extract_text() or ''
-        pages.append(f"--- Page {i+1} ---\n{text}")
-    return '\n\n'.join(pages)
 
-
-def _split_pdf(input_path):
-    """Split PDF into individual page PDFs, return ZIP file."""
-    if not PYPDF_AVAILABLE:
-        raise RuntimeError("pypdf is not installed. Run: pip install pypdf")
-    
-    reader = pypdf.PdfReader(input_path)
-    num_pages = len(reader.pages)
-    
-    if num_pages < 1:
-        raise ValueError("PDF is empty.")
-    
-    temp_dir = tempfile.mkdtemp()
-    zip_path = tempfile.NamedTemporaryFile(delete=False, suffix='.zip').name
-    
+def _pdf_to_jpg(input_path):
+    if not PIL_AVAILABLE:
+        raise RuntimeError("Pillow is not installed.")
     try:
-        for i, page in enumerate(reader.pages, 1):
-            writer = pypdf.PdfWriter()
-            writer.add_page(page)
-            page_path = os.path.join(temp_dir, f'page_{i:03d}.pdf')
-            with open(page_path, 'wb') as f:
-                writer.write(f)
-        
-        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-            for i in range(1, num_pages + 1):
-                page_file = os.path.join(temp_dir, f'page_{i:03d}.pdf')
-                zf.write(page_file, arcname=f'page_{i:03d}.pdf')
-        
-        return zip_path
-    finally:
-        if os.path.exists(temp_dir):
+        from pdf2image import convert_from_path
+        images = convert_from_path(input_path, dpi=150)
+    except ImportError:
+        raise RuntimeError(
+            "PDF to JPG requires pdf2image. Run: pip install pdf2image\n"
+            "Also install poppler: https://github.com/oschwartz10612/poppler-windows/releases"
+        )
+    if len(images) == 1:
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+        tmp.close()
+        img = images[0]
+        if img.mode in ('RGBA', 'P', 'LA'):
+            img = img.convert('RGB')
+        img.save(tmp.name, 'JPEG', quality=90)
+        return tmp.name
+    else:
+        temp_dir = tempfile.mkdtemp()
+        zip_path = tempfile.NamedTemporaryFile(delete=False, suffix='.zip').name
+        try:
+            for i, img in enumerate(images, 1):
+                if img.mode in ('RGBA', 'P', 'LA'):
+                    img = img.convert('RGB')
+                img.save(os.path.join(temp_dir, f'page_{i:03d}.jpg'), 'JPEG', quality=90)
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+                for i in range(1, len(images) + 1):
+                    zf.write(os.path.join(temp_dir, f'page_{i:03d}.jpg'), arcname=f'page_{i:03d}.jpg')
+            return zip_path
+        finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-def _merge_pdf(input_paths):
-    """Merge multiple PDFs into one."""
+# ── PDF TEXT EXTRACTION (pdfplumber first, pypdf fallback) ────────────────────
+
+def _extract_pdf_text(input_path):
+    """Extract text using pdfplumber (better quality) with pypdf as fallback."""
+    if PDFPLUMBER_AVAILABLE:
+        try:
+            pages = []
+            with pdfplumber.open(input_path) as pdf:
+                for i, page in enumerate(pdf.pages):
+                    text = page.extract_text() or ''
+                    # Also extract tables if present
+                    tables = page.extract_tables()
+                    table_text = ''
+                    for table in tables:
+                        for row in table:
+                            row_clean = [str(cell or '').strip() for cell in row]
+                            table_text += ' | '.join(row_clean) + '\n'
+                    combined = text
+                    if table_text:
+                        combined += '\n[TABLE]\n' + table_text
+                    pages.append(f"--- Page {i+1} ---\n{combined}")
+            return '\n\n'.join(pages)
+        except Exception:
+            pass  # fall through to pypdf
+
+    if PYPDF_AVAILABLE:
+        reader = PdfReader(input_path)
+        pages = []
+        for i, page in enumerate(reader.pages):
+            text = page.extract_text() or ''
+            pages.append(f"--- Page {i+1} ---\n{text}")
+        return '\n\n'.join(pages)
+
+    raise RuntimeError("Neither pdfplumber nor pypdf is installed. Run: pip install pdfplumber")
+
+
+# ── PDF OPERATIONS ─────────────────────────────────────────────────────────────
+
+def _split_pdf(input_path):
     if not PYPDF_AVAILABLE:
         raise RuntimeError("pypdf is not installed. Run: pip install pypdf")
-    
-    if not input_paths or len(input_paths) < 1:
-        raise ValueError("At least 1 PDF file is required.")
-    
-    writer = pypdf.PdfWriter()
-    
+    reader = PdfReader(input_path)
+    num_pages = len(reader.pages)
+    if num_pages < 1:
+        raise ValueError("PDF is empty.")
+    temp_dir = tempfile.mkdtemp()
+    zip_path = tempfile.NamedTemporaryFile(delete=False, suffix='.zip').name
+    try:
+        for i, page in enumerate(reader.pages, 1):
+            writer = PdfWriter()
+            writer.add_page(page)
+            with open(os.path.join(temp_dir, f'page_{i:03d}.pdf'), 'wb') as f:
+                writer.write(f)
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for i in range(1, num_pages + 1):
+                zf.write(os.path.join(temp_dir, f'page_{i:03d}.pdf'), arcname=f'page_{i:03d}.pdf')
+        return zip_path
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+def _merge_pdf(input_paths):
+    if not PYPDF_AVAILABLE:
+        raise RuntimeError("pypdf is not installed. Run: pip install pypdf")
+    writer = PdfWriter()
     for pdf_path in input_paths:
         if not os.path.exists(pdf_path):
             raise ValueError(f"File not found: {pdf_path}")
-        reader = pypdf.PdfReader(pdf_path)
+        reader = PdfReader(pdf_path)
         for page in reader.pages:
             writer.add_page(page)
-    
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
     tmp.close()
-    
     with open(tmp.name, 'wb') as f:
         writer.write(f)
-    
+    return tmp.name
+
+
+def _compress_pdf(input_path):
+    if not PYPDF_AVAILABLE:
+        raise RuntimeError("pypdf is not installed. Run: pip install pypdf")
+    reader = PdfReader(input_path)
+    writer = PdfWriter()
+    for page in reader.pages:
+        page.compress_content_streams()
+        writer.add_page(page)
+    writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+    tmp.close()
+    with open(tmp.name, 'wb') as f:
+        writer.write(f)
+    return tmp.name
+
+
+def _rotate_pdf(input_path, angle):
+    if not PYPDF_AVAILABLE:
+        raise RuntimeError("pypdf is not installed. Run: pip install pypdf")
+    if angle not in (90, 180, 270):
+        raise ValueError("Rotation angle must be 90, 180, or 270.")
+    reader = PdfReader(input_path)
+    writer = PdfWriter()
+    for page in reader.pages:
+        page.rotate(angle)
+        writer.add_page(page)
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+    tmp.close()
+    with open(tmp.name, 'wb') as f:
+        writer.write(f)
+    return tmp.name
+
+
+def _protect_pdf(input_path, password):
+    if not PYPDF_AVAILABLE:
+        raise RuntimeError("pypdf is not installed. Run: pip install pypdf")
+    if not password:
+        raise ValueError("A password is required to protect the PDF.")
+    reader = PdfReader(input_path)
+    writer = PdfWriter()
+    for page in reader.pages:
+        writer.add_page(page)
+    writer.encrypt(password)
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+    tmp.close()
+    with open(tmp.name, 'wb') as f:
+        writer.write(f)
+    return tmp.name
+
+
+def _unlock_pdf(input_path, password):
+    if not PYPDF_AVAILABLE:
+        raise RuntimeError("pypdf is not installed. Run: pip install pypdf")
+    reader = PdfReader(input_path)
+    if reader.is_encrypted:
+        if not reader.decrypt(password):
+            raise ValueError("Incorrect password. Could not unlock PDF.")
+    writer = PdfWriter()
+    for page in reader.pages:
+        writer.add_page(page)
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+    tmp.close()
+    with open(tmp.name, 'wb') as f:
+        writer.write(f)
     return tmp.name
 
 
@@ -242,6 +359,8 @@ def _pdf_convert(input_path, out_fmt):
                 continue
             if stripped.startswith('--- Page '):
                 html_lines.append(f'<h2 style="color:#0F6E56;border-bottom:1px solid #ccc;">{stripped}</h2>')
+            elif stripped.startswith('[TABLE]'):
+                html_lines.append('<div style="font-family:monospace;background:#f5f5f5;padding:8px;border-radius:4px;margin:8px 0">')
             else:
                 html_lines.append(f'<p>{stripped}</p>')
         html = (
@@ -256,7 +375,7 @@ def _pdf_convert(input_path, out_fmt):
         return tmp.name
 
     if out_fmt == 'md':
-        text     = _extract_pdf_text(input_path)
+        text = _extract_pdf_text(input_path)
         md_lines = []
         for line in text.splitlines():
             stripped = line.strip()
@@ -282,7 +401,7 @@ def _pdf_convert(input_path, out_fmt):
             stripped = line.strip()
             if stripped.startswith('--- Page '):
                 doc.add_heading(stripped, level=1)
-            elif stripped:
+            elif stripped and not stripped.startswith('[TABLE]'):
                 doc.add_paragraph(stripped)
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.docx')
         tmp.close()
@@ -297,7 +416,6 @@ def _pdf_convert(input_path, out_fmt):
 def _docx_convert(input_path, out_fmt):
     if not DOCX_AVAILABLE:
         raise RuntimeError("python-docx is not installed. Run: pip install python-docx")
-
     doc        = Document(input_path)
     paragraphs = [p.text for p in doc.paragraphs]
 
@@ -364,7 +482,7 @@ def _docx_convert(input_path, out_fmt):
         try:
             from weasyprint import HTML as WP_HTML
         except ImportError:
-            raise RuntimeError("WeasyPrint required for DOCX→PDF. Run: pip install weasyprint")
+            raise RuntimeError("WeasyPrint required for DOCX→PDF.")
         html_path = None
         pdf_tmp   = None
         try:
@@ -377,17 +495,13 @@ def _docx_convert(input_path, out_fmt):
             return pdf_tmp.name
         except Exception:
             if pdf_tmp and os.path.exists(pdf_tmp.name):
-                try:
-                    os.unlink(pdf_tmp.name)
-                except OSError:
-                    pass
+                try: os.unlink(pdf_tmp.name)
+                except OSError: pass
             raise
         finally:
             if html_path and os.path.exists(html_path):
-                try:
-                    os.unlink(html_path)
-                except OSError:
-                    pass
+                try: os.unlink(html_path)
+                except OSError: pass
 
     raise ValueError(f"DOCX to '{out_fmt}' is not supported.")
 
@@ -432,12 +546,11 @@ def _txt_convert(input_path, out_fmt):
         try:
             from weasyprint import HTML as WP_HTML
         except ImportError:
-            raise RuntimeError("WeasyPrint required for TXT→PDF. Run: pip install weasyprint")
+            raise RuntimeError("WeasyPrint required for TXT→PDF.")
         html_lines = [f'<p>{line}</p>' if line.strip() else '<br>' for line in text.splitlines()]
         html = (
             "<html><body style='font-family:Arial;padding:2cm;line-height:1.6'>"
-            + ''.join(html_lines)
-            + "</body></html>"
+            + ''.join(html_lines) + "</body></html>"
         )
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
         tmp.close()
@@ -474,8 +587,8 @@ def _md_convert(input_path, out_fmt):
         import re
         clean = re.sub(r'#{1,6}\s', '', text)
         clean = re.sub(r'\*\*(.+?)\*\*', r'\1', clean)
-        clean = re.sub(r'\*(.+?)\*',     r'\1', clean)
-        clean = re.sub(r'`(.+?)`',       r'\1', clean)
+        clean = re.sub(r'\*(.+?)\*', r'\1', clean)
+        clean = re.sub(r'`(.+?)`', r'\1', clean)
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.txt', mode='w', encoding='utf-8')
         tmp.write(clean)
         tmp.close()
@@ -490,10 +603,8 @@ def _md_convert(input_path, out_fmt):
             with open(html_path, 'r', encoding='utf-8') as f:
                 html_content = f.read()
         finally:
-            try:
-                os.unlink(html_path)
-            except OSError:
-                pass
+            try: os.unlink(html_path)
+            except OSError: pass
         clean = re.sub(r'<[^>]+>', '', html_content)
         doc   = Document()
         for line in clean.splitlines():
@@ -512,7 +623,6 @@ def _md_convert(input_path, out_fmt):
 def _html_convert(input_path, out_fmt):
     with open(input_path, 'r', encoding='utf-8', errors='replace') as f:
         html_content = f.read()
-
     import re
 
     def strip_tags(html):
