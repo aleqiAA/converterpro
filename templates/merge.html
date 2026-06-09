@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -144,6 +144,33 @@
     }
     .merge-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
 
+    /* Progress bar */
+    .progress-container {
+      display: none;
+      margin-top: 1.5rem;
+    }
+    .progress-container.show { display: block; }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--green-light));
+      width: 0%;
+      transition: width 0.2s;
+      border-radius: 4px;
+    }
+    .progress-text {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
     /* Status */
     .status {
       margin-top: 1.5rem;
@@ -152,6 +179,7 @@
       text-align: center;
       display: none;
       font-weight: 500;
+      min-height: 24px;
     }
     .status.show { display: block; }
     .status.error   { background: #FEE2E2; color: #DC2626; }
@@ -187,7 +215,7 @@
       <div class="drop-zone" id="dropZone">
         <div class="drop-icon">📄</div>
         <div class="drop-text">Click to add PDFs or drag &amp; drop</div>
-        <div class="drop-hint">You can add as many PDF files as you want</div>
+        <div class="drop-hint">You can add as many PDF files as you want (Max 15MB per file)</div>
       </div>
       <input type="file" id="fileInput" accept=".pdf" multiple>
 
@@ -205,6 +233,14 @@
         Merge PDFs
       </button>
 
+      <!-- Progress bar -->
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">0%</div>
+      </div>
+
       <div class="status" id="status"></div>
 
       <div class="links-row">
@@ -215,6 +251,8 @@
   </div>
 
   <script>
+    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+
     const dropZone   = document.getElementById('dropZone');
     const fileInput  = document.getElementById('fileInput');
     const fileList   = document.getElementById('fileList');
@@ -222,6 +260,9 @@
     const addMoreBtn = document.getElementById('addMoreBtn');
     const statusEl   = document.getElementById('status');
     const orderHint  = document.getElementById('orderHint');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill      = document.getElementById('progressFill');
+    const progressText      = document.getElementById('progressText');
 
     let files = [];   // array of File objects, order = merge order
     let dragSrcIndex = null;
@@ -245,8 +286,18 @@
     // ── Add files ─────────────────────────────────────────────────────────────
     function addFiles(newFiles) {
       newFiles.forEach(f => {
-        if (!f.name.toLowerCase().endsWith('.pdf')) return;
-        if (files.find(x => x.name === f.name && x.size === f.size)) return;
+        if (!f.name.toLowerCase().endsWith('.pdf')) {
+          showStatus(`❌ ${f.name} is not a PDF file.`, 'error');
+          return;
+        }
+        if (f.size > MAX_FILE_SIZE) {
+          showStatus(`❌ ${f.name} is too large (Max 15MB). Your file is ${formatSize(f.size)}.`, 'error');
+          return;
+        }
+        if (files.find(x => x.name === f.name && x.size === f.size)) {
+          showStatus(`⚠️ ${f.name} is already added.`, 'error');
+          return;
+        }
         files.push(f);
       });
       renderList();
@@ -310,7 +361,7 @@
     }
 
     // ── Merge ─────────────────────────────────────────────────────────────────
-    mergeBtn.addEventListener('click', async () => {
+    mergeBtn.addEventListener('click', () => {
       if (files.length < 2) return;
 
       const formData = new FormData();
@@ -323,34 +374,80 @@
 
       mergeBtn.disabled = true;
       mergeBtn.textContent = 'Merging…';
-      showStatus('Merging your PDFs, please wait…', 'loading');
+      progressContainer.classList.add('show');
+      showStatus('📤 Uploading PDFs...', 'loading');
 
       try {
-        const response = await fetch('/convert', { method: 'POST', body: formData });
+        // Use XMLHttpRequest to track upload progress
+        const xhr = new XMLHttpRequest();
 
-        if (response.ok) {
-          const blob = await response.blob();
-          const url  = URL.createObjectURL(blob);
-          const a    = document.createElement('a');
-          a.href     = url;
-          a.download = 'merged.pdf';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          showStatus('✓ Merged successfully! Your download should start.', 'success');
-        } else {
-          let msg = 'Merge failed.';
-          try { const err = await response.json(); msg = err.error || msg; } catch (_) {}
-          showStatus('Error: ' + msg, 'error');
-        }
+        // Track upload progress
+        xhr.upload.addEventListener('progress', e => {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressFill.style.width = percentComplete + '%';
+            progressText.textContent = percentComplete + '%';
+            showStatus(`📤 Uploading... ${percentComplete}%`, 'loading');
+          }
+        });
+
+        // Handle completion
+        xhr.addEventListener('load', () => {
+          if (xhr.status === 200) {
+            // Animate progress to 100% if not already
+            progressFill.style.width = '100%';
+            progressText.textContent = '100%';
+            showStatus('⚙️ Merging your PDFs...', 'loading');
+
+            // Simulate merge time with animated message
+            setTimeout(() => {
+              showStatus('✓ PDFs merged successfully! Downloading...', 'success');
+              const blob = new Blob([xhr.response], { type: 'application/pdf' });
+              const url  = URL.createObjectURL(blob);
+              const a    = document.createElement('a');
+              a.href     = url;
+              a.download = 'merged.pdf';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              resetProgress();
+            }, 500);
+          } else {
+            let msg = 'Merge failed.';
+            try {
+              const json = JSON.parse(xhr.responseText);
+              msg = json.error || msg;
+            } catch (_) {}
+            showStatus('Error: ' + msg, 'error');
+            resetProgress();
+          }
+        });
+
+        // Handle errors
+        xhr.addEventListener('error', () => {
+          showStatus('Network error during merge.', 'error');
+          resetProgress();
+        });
+
+        xhr.responseType = 'arraybuffer';
+        xhr.open('POST', '/convert');
+        xhr.send(formData);
+
       } catch (err) {
-        showStatus('Network error: ' + err.message, 'error');
+        showStatus('Error: ' + err.message, 'error');
+        resetProgress();
       } finally {
         mergeBtn.disabled = files.length < 2;
         mergeBtn.textContent = `Merge ${files.length} PDFs`;
       }
     });
+
+    function resetProgress() {
+      progressFill.style.width = '0%';
+      progressText.textContent = '0%';
+      progressContainer.classList.remove('show');
+    }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
     function showStatus(msg, type) {
@@ -365,4 +462,3 @@
   </script>
 </body>
 </html>
-

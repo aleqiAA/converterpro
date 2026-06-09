@@ -1,11 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>File Converter — ConverterPro</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5045643961662031" crossorigin="anonymous"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -146,6 +146,34 @@
       box-shadow: 0 4px 16px rgba(15,110,86,0.3);
     }
     .convert-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+    
+    /* Progress bar */
+    .progress-container {
+      display: none;
+      margin-top: 1.5rem;
+    }
+    .progress-container.show { display: block; }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--green-light));
+      width: 0%;
+      transition: width 0.2s;
+      border-radius: 4px;
+    }
+    .progress-text {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    
     .status {
       margin-top: 1.5rem;
       padding: 1rem;
@@ -153,11 +181,13 @@
       text-align: center;
       display: none;
       font-weight: 500;
+      min-height: 24px;
     }
     .status.show { display: block; }
     .status.error   { background: #FEE2E2; color: #DC2626; }
     .status.success { background: var(--green-pale); color: var(--green); }
     .status.loading { background: #EFF6FF; color: #2563EB; }
+    
     .supported-formats {
       margin-top: 3rem;
       padding-top: 2rem;
@@ -183,7 +213,7 @@
     }
     .ad-label { font-size: 0.7rem; color: #999; margin-bottom: 0.5rem; }
   </style>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5045643961662031" crossorigin="anonymous"></script></head>
+</head>
 <body>
   <div class="container">
     <div class="header">
@@ -205,7 +235,7 @@
         <div class="upload-area" id="uploadArea">
           <div class="upload-icon">📁</div>
           <div class="upload-text">Click to upload or drag &amp; drop</div>
-          <div class="upload-hint">Supports images, PDFs, Word docs, Excel files, and more</div>
+          <div class="upload-hint">Supports images, PDFs, Word docs, Excel files, and more (Max 15MB)</div>
           <input type="file" id="fileInput" name="file" accept="*/*">
         </div>
 
@@ -225,6 +255,14 @@
         <button type="submit" class="convert-btn" id="convertBtn" disabled>
           Convert File
         </button>
+
+        <!-- Progress bar -->
+        <div class="progress-container" id="progressContainer">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-text" id="progressText">0%</div>
+        </div>
 
         <div class="status" id="status"></div>
 
@@ -278,7 +316,6 @@
   </div>
 
   <script>
-    // Merge removed from conversion map — it has its own page now
     const CONVERSION_MAP = {
       jpg:  ['png', 'webp', 'gif', 'bmp', 'tiff', 'ico'],
       jpeg: ['png', 'webp', 'gif', 'bmp', 'tiff', 'ico'],
@@ -300,6 +337,8 @@
       json: ['csv', 'xlsx', 'html', 'txt'],
     };
 
+    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+
     const uploadArea        = document.getElementById('uploadArea');
     const fileInput         = document.getElementById('fileInput');
     const fileInfo          = document.getElementById('fileInfo');
@@ -311,6 +350,9 @@
     const convertBtn        = document.getElementById('convertBtn');
     const statusEl          = document.getElementById('status');
     const outputFormatInput = document.getElementById('outputFormatInput');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill      = document.getElementById('progressFill');
+    const progressText      = document.getElementById('progressText');
 
     let selectedFile   = null;
     let selectedFormat = null;
@@ -328,6 +370,13 @@
     });
 
     function handleFile(file) {
+      // File size check
+      if (file.size > MAX_FILE_SIZE) {
+        showStatus(`❌ File too large! Maximum size is 15MB (your file is ${formatSize(file.size)})`, 'error');
+        fileInput.value = '';
+        return;
+      }
+
       selectedFile   = file;
       selectedFormat = null;
       outputFormatInput.value = '';
@@ -380,37 +429,87 @@
         showStatus('Please select a file and a target format.', 'error');
         return;
       }
+
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('output_format', selectedFormat);
+
       convertBtn.disabled = true;
       convertBtn.textContent = 'Converting…';
-      showStatus('Converting your file, please wait…', 'loading');
+      progressContainer.classList.add('show');
+      showStatus('📤 Uploading file...', 'loading');
+
       try {
-        const response = await fetch('/convert', { method: 'POST', body: formData });
-        if (response.ok) {
-          const blob = await response.blob();
-          const url  = URL.createObjectURL(blob);
-          const a    = document.createElement('a');
-          a.href     = url;
-          a.download = selectedFile.name.replace(/\.[^.]+$/, '') + '.' + selectedFormat;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          showStatus('✓ Converted successfully! Your download should start.', 'success');
-        } else {
-          let msg = 'Conversion failed.';
-          try { const err = await response.json(); msg = err.error || msg; } catch (_) {}
-          showStatus('Error: ' + msg, 'error');
-        }
+        // Use XMLHttpRequest to track upload progress
+        const xhr = new XMLHttpRequest();
+
+        // Track upload progress
+        xhr.upload.addEventListener('progress', e => {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressFill.style.width = percentComplete + '%';
+            progressText.textContent = percentComplete + '%';
+            showStatus(`📤 Uploading... ${percentComplete}%`, 'loading');
+          }
+        });
+
+        // Handle completion
+        xhr.addEventListener('load', () => {
+          if (xhr.status === 200) {
+            // Animate progress to 100% if not already
+            progressFill.style.width = '100%';
+            progressText.textContent = '100%';
+            showStatus('⚙️ Processing your file...', 'loading');
+
+            // Simulate processing time with animated message
+            setTimeout(() => {
+              showStatus('✓ Conversion complete! Downloading...', 'success');
+              const blob = new Blob([xhr.response], { type: 'application/octet-stream' });
+              const url  = URL.createObjectURL(blob);
+              const a    = document.createElement('a');
+              a.href     = url;
+              a.download = selectedFile.name.replace(/\.[^.]+$/, '') + '.' + selectedFormat;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              resetProgress();
+            }, 500);
+          } else {
+            let msg = 'Conversion failed.';
+            try {
+              const json = JSON.parse(xhr.responseText);
+              msg = json.error || msg;
+            } catch (_) {}
+            showStatus('Error: ' + msg, 'error');
+            resetProgress();
+          }
+        });
+
+        // Handle errors
+        xhr.addEventListener('error', () => {
+          showStatus('Network error during conversion.', 'error');
+          resetProgress();
+        });
+
+        xhr.responseType = 'arraybuffer';
+        xhr.open('POST', '/convert');
+        xhr.send(formData);
+
       } catch (err) {
-        showStatus('Network error: ' + err.message, 'error');
+        showStatus('Error: ' + err.message, 'error');
+        resetProgress();
       } finally {
         convertBtn.disabled = false;
         convertBtn.textContent = 'Convert File';
       }
     });
+
+    function resetProgress() {
+      progressFill.style.width = '0%';
+      progressText.textContent = '0%';
+      progressContainer.classList.remove('show');
+    }
 
     function showStatus(msg, type) {
       statusEl.textContent = msg;
@@ -425,4 +524,3 @@
   </script>
 </body>
 </html>
-

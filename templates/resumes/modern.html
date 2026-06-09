@@ -1,100 +1,464 @@
 ﻿<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merge PDFs — ConverterPro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    @page { size: A4; margin: 0; }
-    body { font-family: 'Arial', sans-serif; font-size: 10pt; line-height: 1.4; color: #333; margin: 0; }
-    .container { display: flex; min-height: 100vh; }
-    .sidebar { width: 35%; background: #0F6E56; color: white; padding: 40px 30px; }
-    .main { width: 65%; padding: 40px 35px; }
-    h1 { font-size: 26pt; margin: 0 0 5px 0; }
-    h2 { font-size: 13pt; margin: 25px 0 12px 0; color: #0F6E56; text-transform: uppercase; letter-spacing: 1px; }
-    .sidebar h2 { color: white; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 8px; }
-    h3 { font-size: 11pt; margin: 10px 0 3px 0; font-weight: bold; }
-    .title { font-size: 13pt; color: rgba(255,255,255,0.9); margin-bottom: 25px; }
-    .contact-item { margin-bottom: 10px; font-size: 9pt; }
-    .section { margin-bottom: 20px; }
-    .job, .edu { margin-bottom: 15px; }
-    .company { color: #0F6E56; font-weight: 600; }
-    .date { color: #666; font-size: 9pt; font-style: italic; margin-top: 2px; }
-    .skill { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 3px; font-size: 9pt; margin: 5px 5px 5px 0; display: inline-block; }
-    .lang-item { margin-bottom: 8px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #0F6E56;
+      --green-light: #1D9E75;
+      --green-pale: #E8F5F0;
+      --text: #1A1A2E;
+      --muted: #6B7280;
+      --border: #E5E7EB;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f0faf6 0%, #ffffff 60%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 3rem; }
+    .logo { font-size: 1.8rem; font-weight: 800; color: var(--green); margin-bottom: 1rem; }
+    h1 { font-size: 2.5rem; font-weight: 800; color: var(--text); margin-bottom: 0.5rem; }
+    .subtitle { font-size: 1.1rem; color: var(--muted); }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 3rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 3rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 2rem;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--green);
+      background: var(--green-pale);
+    }
+    .drop-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .drop-text { font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+    .drop-hint { font-size: 0.9rem; color: var(--muted); }
+    input[type="file"] { display: none; }
+
+    /* File list */
+    .file-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+    .file-list:empty { display: none; }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--green-pale);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+    .file-item .drag-handle {
+      cursor: grab;
+      color: var(--muted);
+      font-size: 1.1rem;
+      user-select: none;
+    }
+    .file-item .file-icon { font-size: 1.2rem; }
+    .file-item .file-name {
+      flex: 1;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-item .file-size { color: var(--muted); font-size: 0.8rem; white-space: nowrap; }
+    .file-item .remove-btn {
+      background: none;
+      border: none;
+      color: #DC2626;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0 0.25rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .file-item.dragging { opacity: 0.4; }
+    .file-item.drag-over { border: 2px solid var(--green); }
+
+    /* Order hint */
+    .order-hint {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    .order-hint.show { display: block; }
+
+    /* Add more button */
+    .add-more-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.2rem;
+      background: white;
+      border: 2px solid var(--green);
+      color: var(--green);
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 2rem;
+    }
+    .add-more-btn:hover { background: var(--green-pale); }
+
+    /* Merge button */
+    .merge-btn {
+      width: 100%;
+      padding: 1rem;
+      background: var(--green);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .merge-btn:hover:not(:disabled) {
+      background: var(--green-light);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(15,110,86,0.3);
+    }
+    .merge-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+    /* Progress bar */
+    .progress-container {
+      display: none;
+      margin-top: 1.5rem;
+    }
+    .progress-container.show { display: block; }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--green-light));
+      width: 0%;
+      transition: width 0.2s;
+      border-radius: 4px;
+    }
+    .progress-text {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* Status */
+    .status {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      display: none;
+      font-weight: 500;
+      min-height: 24px;
+    }
+    .status.show { display: block; }
+    .status.error   { background: #FEE2E2; color: #DC2626; }
+    .status.success { background: var(--green-pale); color: var(--green); }
+    .status.loading { background: #EFF6FF; color: #2563EB; }
+
+    /* Links */
+    .back-link {
+      display: inline-block;
+      margin-top: 2rem;
+      color: var(--green);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .links-row {
+      display: flex;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
   </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5045643961662031" crossorigin="anonymous"></script></head>
 <body>
   <div class="container">
-    <div class="sidebar">
-      <h1>{{ cv.name }}</h1>
-      <div class="title">{{ cv.title }}</div>
-
-      <div class="section">
-        <h2>Contact</h2>
-        <div class="contact-item">📧 {{ cv.email }}</div>
-        <div class="contact-item">📱 {{ cv.phone }}</div>
-        <div class="contact-item">📍 {{ cv.location }}</div>
-        {% if cv.linkedin %}<div class="contact-item">🔗 {{ cv.linkedin }}</div>{% endif %}
-        {% if cv.website %}<div class="contact-item">🌐 {{ cv.website }}</div>{% endif %}
-      </div>
-
-      {% if cv.skills %}
-      <div class="section">
-        <h2>Skills</h2>
-        {% for skill in cv.skills %}
-        <span class="skill">{{ skill }}</span>
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      {% if cv.languages %}
-      <div class="section">
-        <h2>Languages</h2>
-        {% for lang in cv.languages %}
-        <div class="lang-item"><strong>{{ lang.language }}</strong><br>{{ lang.level }}</div>
-        {% endfor %}
-      </div>
-      {% endif %}
+    <div class="header">
+      <div class="logo">ConverterPro</div>
+      <h1>🔗 Merge PDFs</h1>
+      <p class="subtitle">Combine multiple PDF files into one — drag to reorder, then merge</p>
     </div>
 
-    <div class="main">
-      {% if cv.summary %}
-      <div class="section">
-        <h2>Profile</h2>
-        <p>{{ cv.summary }}</p>
+    <div class="card">
+      <!-- Drop zone -->
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon">📄</div>
+        <div class="drop-text">Click to add PDFs or drag &amp; drop</div>
+        <div class="drop-hint">You can add as many PDF files as you want (Max 15MB per file)</div>
       </div>
-      {% endif %}
+      <input type="file" id="fileInput" accept=".pdf" multiple>
 
-      {% if cv.experience %}
-      <div class="section">
-        <h2>Experience</h2>
-        {% for job in cv.experience %}
-        <div class="job">
-          <h3>{{ job.job_title }}</h3>
-          <div class="company">{{ job.company }}</div>
-          <div class="date">{{ job.start }} - {{ job.end }}</div>
-          {% if job.responsibilities %}
-          <p style="margin-top: 8px;">{{ job.responsibilities }}</p>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
+      <!-- File list -->
+      <p class="order-hint" id="orderHint">💡 Drag files to reorder them before merging</p>
+      <div class="file-list" id="fileList"></div>
 
-      {% if cv.education %}
-      <div class="section">
-        <h2>Education</h2>
-        {% for edu in cv.education %}
-        <div class="edu">
-          <h3>{{ edu.qualification }}{% if edu.field %} in {{ edu.field }}{% endif %}</h3>
-          <div class="company">{{ edu.institution }}</div>
-          <div class="date">{{ edu.year }}{% if edu.grade %} | {{ edu.grade }}{% endif %}</div>
+      <!-- Add more -->
+      <button type="button" class="add-more-btn" id="addMoreBtn" style="display:none;">
+        + Add more PDFs
+      </button>
+
+      <!-- Merge -->
+      <button type="button" class="merge-btn" id="mergeBtn" disabled>
+        Merge PDFs
+      </button>
+
+      <!-- Progress bar -->
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
         </div>
-        {% endfor %}
+        <div class="progress-text" id="progressText">0%</div>
       </div>
-      {% endif %}
+
+      <div class="status" id="status"></div>
+
+      <div class="links-row">
+        <a href="/converter" class="back-link">← File Converter</a>
+        <a href="/" class="back-link">← Back to Home</a>
+      </div>
     </div>
   </div>
+
+  <script>
+    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+
+    const dropZone   = document.getElementById('dropZone');
+    const fileInput  = document.getElementById('fileInput');
+    const fileList   = document.getElementById('fileList');
+    const mergeBtn   = document.getElementById('mergeBtn');
+    const addMoreBtn = document.getElementById('addMoreBtn');
+    const statusEl   = document.getElementById('status');
+    const orderHint  = document.getElementById('orderHint');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill      = document.getElementById('progressFill');
+    const progressText      = document.getElementById('progressText');
+
+    let files = [];   // array of File objects, order = merge order
+    let dragSrcIndex = null;
+
+    // ── Drop zone ─────────────────────────────────────────────────────────────
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      addFiles(Array.from(e.dataTransfer.files));
+    });
+    fileInput.addEventListener('change', e => {
+      addFiles(Array.from(e.target.files));
+      fileInput.value = '';
+    });
+
+    addMoreBtn.addEventListener('click', () => fileInput.click());
+
+    // ── Add files ─────────────────────────────────────────────────────────────
+    function addFiles(newFiles) {
+      newFiles.forEach(f => {
+        if (!f.name.toLowerCase().endsWith('.pdf')) {
+          showStatus(`❌ ${f.name} is not a PDF file.`, 'error');
+          return;
+        }
+        if (f.size > MAX_FILE_SIZE) {
+          showStatus(`❌ ${f.name} is too large (Max 15MB). Your file is ${formatSize(f.size)}.`, 'error');
+          return;
+        }
+        if (files.find(x => x.name === f.name && x.size === f.size)) {
+          showStatus(`⚠️ ${f.name} is already added.`, 'error');
+          return;
+        }
+        files.push(f);
+      });
+      renderList();
+    }
+
+    // ── Render file list ──────────────────────────────────────────────────────
+    function renderList() {
+      fileList.innerHTML = '';
+
+      files.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.draggable = true;
+        item.dataset.index = index;
+        item.innerHTML = `
+          <span class="drag-handle" title="Drag to reorder">☰</span>
+          <span class="file-icon">📄</span>
+          <span class="file-name" title="${file.name}">${file.name}</span>
+          <span class="file-size">${formatSize(file.size)}</span>
+          <button type="button" class="remove-btn" data-index="${index}" title="Remove">✕</button>
+        `;
+
+        // Drag to reorder
+        item.addEventListener('dragstart', e => {
+          dragSrcIndex = index;
+          setTimeout(() => item.classList.add('dragging'), 0);
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        item.addEventListener('dragend', () => item.classList.remove('dragging'));
+        item.addEventListener('dragover', e => {
+          e.preventDefault();
+          item.classList.add('drag-over');
+        });
+        item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+        item.addEventListener('drop', e => {
+          e.preventDefault();
+          item.classList.remove('drag-over');
+          if (dragSrcIndex === null || dragSrcIndex === index) return;
+          const moved = files.splice(dragSrcIndex, 1)[0];
+          files.splice(index, 0, moved);
+          dragSrcIndex = null;
+          renderList();
+        });
+
+        // Remove
+        item.querySelector('.remove-btn').addEventListener('click', () => {
+          files.splice(index, 1);
+          renderList();
+        });
+
+        fileList.appendChild(item);
+      });
+
+      const hasFiles = files.length > 0;
+      mergeBtn.disabled = files.length < 2;
+      addMoreBtn.style.display = hasFiles ? 'inline-flex' : 'none';
+      orderHint.classList.toggle('show', files.length >= 2);
+      mergeBtn.textContent = files.length < 2
+        ? `Merge PDFs ${files.length > 0 ? '(add at least 2)' : ''}`
+        : `Merge ${files.length} PDFs`;
+    }
+
+    // ── Merge ─────────────────────────────────────────────────────────────────
+    mergeBtn.addEventListener('click', () => {
+      if (files.length < 2) return;
+
+      const formData = new FormData();
+      // First file goes as 'file', rest as 'mergeFiles'
+      formData.append('file', files[0]);
+      for (let i = 1; i < files.length; i++) {
+        formData.append('mergeFiles', files[i]);
+      }
+      formData.append('output_format', 'merge');
+
+      mergeBtn.disabled = true;
+      mergeBtn.textContent = 'Merging…';
+      progressContainer.classList.add('show');
+      showStatus('📤 Uploading PDFs...', 'loading');
+
+      try {
+        // Use XMLHttpRequest to track upload progress
+        const xhr = new XMLHttpRequest();
+
+        // Track upload progress
+        xhr.upload.addEventListener('progress', e => {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressFill.style.width = percentComplete + '%';
+            progressText.textContent = percentComplete + '%';
+            showStatus(`📤 Uploading... ${percentComplete}%`, 'loading');
+          }
+        });
+
+        // Handle completion
+        xhr.addEventListener('load', () => {
+          if (xhr.status === 200) {
+            // Animate progress to 100% if not already
+            progressFill.style.width = '100%';
+            progressText.textContent = '100%';
+            showStatus('⚙️ Merging your PDFs...', 'loading');
+
+            // Simulate merge time with animated message
+            setTimeout(() => {
+              showStatus('✓ PDFs merged successfully! Downloading...', 'success');
+              const blob = new Blob([xhr.response], { type: 'application/pdf' });
+              const url  = URL.createObjectURL(blob);
+              const a    = document.createElement('a');
+              a.href     = url;
+              a.download = 'merged.pdf';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              resetProgress();
+            }, 500);
+          } else {
+            let msg = 'Merge failed.';
+            try {
+              const json = JSON.parse(xhr.responseText);
+              msg = json.error || msg;
+            } catch (_) {}
+            showStatus('Error: ' + msg, 'error');
+            resetProgress();
+          }
+        });
+
+        // Handle errors
+        xhr.addEventListener('error', () => {
+          showStatus('Network error during merge.', 'error');
+          resetProgress();
+        });
+
+        xhr.responseType = 'arraybuffer';
+        xhr.open('POST', '/convert');
+        xhr.send(formData);
+
+      } catch (err) {
+        showStatus('Error: ' + err.message, 'error');
+        resetProgress();
+      } finally {
+        mergeBtn.disabled = files.length < 2;
+        mergeBtn.textContent = `Merge ${files.length} PDFs`;
+      }
+    });
+
+    function resetProgress() {
+      progressFill.style.width = '0%';
+      progressText.textContent = '0%';
+      progressContainer.classList.remove('show');
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function showStatus(msg, type) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status show ' + type;
+    }
+    function formatSize(bytes) {
+      if (bytes < 1024)    return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+  </script>
 </body>
 </html>
-
-
