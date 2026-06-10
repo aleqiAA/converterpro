@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Split PDF — ConverterPro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #0F6E56; --green-light: #1D9E75; --green-pale: #E8F5F0;
+      --text: #1A1A2E; --muted: #6B7280; --border: #E5E7EB;
+    }
+    body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #f0faf6 0%, #ffffff 60%); min-height: 100vh; padding: 2rem; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 3rem; }
+    .logo { font-size: 1.8rem; font-weight: 800; color: var(--green); margin-bottom: 1rem; }
+    h1 { font-size: 2.5rem; font-weight: 800; color: var(--text); margin-bottom: 0.5rem; }
+    .subtitle { font-size: 1.1rem; color: var(--muted); }
+    .card { background: white; border-radius: 16px; padding: 3rem; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+    .drop-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 3rem; text-align: center; cursor: pointer; transition: all 0.3s; margin-bottom: 2rem; }
+    .drop-zone:hover, .drop-zone.dragover { border-color: var(--green); background: var(--green-pale); }
+    .drop-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .drop-text { font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+    .drop-hint { font-size: 0.9rem; color: var(--muted); }
+    input[type="file"] { display: none; }
+    .file-info { background: var(--green-pale); border-radius: 8px; padding: 1rem; margin-bottom: 2rem; display: none; }
+    .file-info.show { display: block; }
+    .file-name { font-weight: 600; color: var(--text); margin-bottom: 0.25rem; }
+    .file-size { font-size: 0.85rem; color: var(--muted); }
+    .info-box { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 1rem; margin-bottom: 2rem; font-size: 0.9rem; color: #1D4ED8; }
+    .action-btn { width: 100%; padding: 1rem; background: var(--green); color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .action-btn:hover:not(:disabled) { background: var(--green-light); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(15,110,86,0.3); }
+    .action-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+    .progress-container { display: none; margin-top: 1.5rem; }
+    .progress-container.show { display: block; }
+    .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--green-light)); width: 0%; transition: width 0.2s; border-radius: 4px; }
+    .progress-text { font-size: 0.85rem; color: var(--muted); text-align: center; }
+    .status { margin-top: 1.5rem; padding: 1rem; border-radius: 8px; text-align: center; display: none; font-weight: 500; }
+    .status.show { display: block; }
+    .status.error { background: #FEE2E2; color: #DC2626; }
+    .status.success { background: var(--green-pale); color: var(--green); }
+    .status.loading { background: #EFF6FF; color: #2563EB; }
+    .links-row { display: flex; gap: 2rem; margin-top: 2rem; flex-wrap: wrap; }
+    .back-link { display: inline-block; margin-top: 2rem; color: var(--green); font-weight: 600; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">ConverterPro</div>
+      <h1>✂️ Split PDF</h1>
+      <p class="subtitle">Split a PDF into individual pages — download as a ZIP file</p>
+    </div>
+    <div class="card">
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon">📄</div>
+        <div class="drop-text">Click to upload a PDF or drag &amp; drop</div>
+        <div class="drop-hint">Max 15MB — each page becomes a separate PDF</div>
+      </div>
+      <input type="file" id="fileInput" accept=".pdf">
+
+      <div class="file-info" id="fileInfo">
+        <div class="file-name" id="fileName"></div>
+        <div class="file-size" id="fileSize"></div>
+      </div>
+
+      <div class="info-box">📦 The split pages will be downloaded as a <strong>ZIP file</strong> containing one PDF per page.</div>
+
+      <button type="button" class="action-btn" id="actionBtn" disabled>Split PDF</button>
+
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-text" id="progressText">0%</div>
+      </div>
+      <div class="status" id="status"></div>
+
+      <div class="links-row">
+        <a href="/converter" class="back-link">← File Converter</a>
+        <a href="/merge" class="back-link">🔗 Merge PDFs</a>
+        <a href="/compress" class="back-link">🗜️ Compress PDF</a>
+        <a href="/rotate" class="back-link">🔄 Rotate PDF</a>
+        <a href="/" class="back-link">← Home</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    const MAX_SIZE = 15 * 1024 * 1024;
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileNameEl = document.getElementById('fileName');
+    const fileSizeEl = document.getElementById('fileSize');
+    const actionBtn = document.getElementById('actionBtn');
+    const statusEl = document.getElementById('status');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    let selectedFile = null;
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+    function handleFile(file) {
+      if (!file.name.toLowerCase().endsWith('.pdf')) { showStatus('❌ Please upload a PDF file.', 'error'); return; }
+      if (file.size > MAX_SIZE) { showStatus(`❌ File too large. Max 15MB.`, 'error'); return; }
+      selectedFile = file;
+      fileNameEl.textContent = file.name;
+      fileSizeEl.textContent = formatSize(file.size);
+      fileInfo.classList.add('show');
+      actionBtn.disabled = false;
+      hideStatus();
+    }
+
+    actionBtn.addEventListener('click', () => {
+      if (!selectedFile) return;
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('output_format', 'split');
+      actionBtn.disabled = true;
+      actionBtn.textContent = 'Splitting…';
+      progressContainer.classList.add('show');
+      showStatus('📤 Uploading...', 'loading');
+      const xhr = new XMLHttpRequest();
+      xhr.upload.addEventListener('progress', e => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          progressFill.style.width = pct + '%';
+          progressText.textContent = pct + '%';
+          showStatus(`📤 Uploading... ${pct}%`, 'loading');
+        }
+      });
+      xhr.addEventListener('load', () => {
+        progressFill.style.width = '100%';
+        progressText.textContent = '100%';
+        if (xhr.status === 200) {
+          showStatus('⚙️ Splitting pages...', 'loading');
+          setTimeout(() => {
+            showStatus('✓ PDF split! Downloading ZIP...', 'success');
+            const blob = new Blob([xhr.response], { type: 'application/zip' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = selectedFile.name.replace('.pdf', '_pages.zip');
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            resetProgress();
+          }, 500);
+        } else {
+          let msg = 'Split failed.';
+          try { msg = JSON.parse(xhr.responseText).error || msg; } catch (_) {}
+          showStatus('Error: ' + msg, 'error');
+          resetProgress();
+        }
+      });
+      xhr.addEventListener('error', () => { showStatus('Network error.', 'error'); resetProgress(); });
+      xhr.responseType = 'arraybuffer';
+      xhr.open('POST', '/convert');
+      xhr.send(formData);
+      actionBtn.disabled = false;
+      actionBtn.textContent = 'Split PDF';
+    });
+
+    function resetProgress() { progressFill.style.width = '0%'; progressText.textContent = '0%'; progressContainer.classList.remove('show'); }
+    function showStatus(msg, type) { statusEl.textContent = msg; statusEl.className = 'status show ' + type; }
+    function hideStatus() { statusEl.className = 'status'; }
+    function formatSize(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b/1024).toFixed(1) + ' KB'; return (b/1048576).toFixed(1) + ' MB'; }
+  </script>
+</body>
+</html>

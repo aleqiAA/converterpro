@@ -9,208 +9,74 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --green: #0F6E56;
-      --green-light: #1D9E75;
-      --green-pale: #E8F5F0;
-      --text: #1A1A2E;
-      --muted: #6B7280;
-      --border: #E5E7EB;
+      --green: #0F6E56; --green-light: #1D9E75; --green-pale: #E8F5F0;
+      --text: #1A1A2E; --muted: #6B7280; --border: #E5E7EB;
     }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #f0faf6 0%, #ffffff 60%);
-      min-height: 100vh;
-      padding: 2rem;
-    }
+    body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #f0faf6 0%, #ffffff 60%); min-height: 100vh; padding: 2rem; }
     .container { max-width: 800px; margin: 0 auto; }
     .header { text-align: center; margin-bottom: 3rem; }
     .logo { font-size: 1.8rem; font-weight: 800; color: var(--green); margin-bottom: 1rem; }
     h1 { font-size: 2.5rem; font-weight: 800; color: var(--text); margin-bottom: 0.5rem; }
     .subtitle { font-size: 1.1rem; color: var(--muted); }
-    .converter-card {
-      background: white;
-      border-radius: 16px;
-      padding: 3rem;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    }
-    /* Merge banner */
-    .merge-banner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    .converter-card { background: white; border-radius: 16px; padding: 3rem; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+
+    /* PDF tools grid */
+    .pdf-tools { margin-bottom: 2rem; }
+    .pdf-tools-label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 0.75rem; }
+    .pdf-tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.6rem; }
+    .pdf-tool-btn {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.6rem 0.9rem;
       background: var(--green-pale);
       border: 1px solid var(--green);
-      border-radius: 10px;
-      padding: 0.9rem 1.2rem;
-      margin-bottom: 2rem;
-      gap: 1rem;
-    }
-    .merge-banner span { font-size: 0.95rem; color: var(--text); }
-    .merge-banner a {
-      padding: 0.45rem 1rem;
-      background: var(--green);
-      color: white;
-      border-radius: 6px;
-      font-weight: 700;
-      font-size: 0.85rem;
+      border-radius: 8px;
+      color: var(--green);
+      font-weight: 600;
+      font-size: 0.82rem;
       text-decoration: none;
+      transition: all 0.2s;
       white-space: nowrap;
-      transition: background 0.2s;
     }
-    .merge-banner a:hover { background: var(--green-light); }
-    .upload-area {
-      border: 2px dashed var(--border);
-      border-radius: 12px;
-      padding: 3rem;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s;
-      margin-bottom: 2rem;
-    }
-    .upload-area:hover, .upload-area.dragover {
-      border-color: var(--green);
-      background: var(--green-pale);
-    }
+    .pdf-tool-btn:hover { background: var(--green); color: white; }
+
+    .upload-area { border: 2px dashed var(--border); border-radius: 12px; padding: 3rem; text-align: center; cursor: pointer; transition: all 0.3s; margin-bottom: 2rem; }
+    .upload-area:hover, .upload-area.dragover { border-color: var(--green); background: var(--green-pale); }
     .upload-icon { font-size: 3rem; margin-bottom: 1rem; }
     .upload-text { font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
     .upload-hint { font-size: 0.9rem; color: var(--muted); }
     input[type="file"] { display: none; }
-    .file-info {
-      background: var(--green-pale);
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 2rem;
-      display: none;
-    }
+    .file-info { background: var(--green-pale); border-radius: 8px; padding: 1rem; margin-bottom: 2rem; display: none; }
     .file-info.show { display: block; }
     .file-name { font-weight: 600; color: var(--text); margin-bottom: 0.25rem; }
     .file-size { font-size: 0.85rem; color: var(--muted); }
-    .file-type-badge {
-      display: inline-block;
-      margin-top: 0.4rem;
-      padding: 0.2rem 0.6rem;
-      background: var(--green);
-      color: white;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
+    .file-type-badge { display: inline-block; margin-top: 0.4rem; padding: 0.2rem 0.6rem; background: var(--green); color: white; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
     .format-selector { margin-bottom: 2rem; }
     label { display: block; font-weight: 600; color: var(--text); margin-bottom: 0.75rem; }
-    .format-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-      gap: 0.75rem;
-    }
-    .format-btn {
-      padding: 0.75rem;
-      border: 2px solid var(--border);
-      border-radius: 8px;
-      background: white;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 0.85rem;
-      transition: all 0.2s;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+    .format-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 0.75rem; }
+    .format-btn { padding: 0.75rem; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-weight: 700; font-size: 0.85rem; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
     .format-btn:hover { border-color: var(--green); color: var(--green); }
-    .format-btn.active {
-      background: var(--green);
-      color: white;
-      border-color: var(--green);
-    }
-    .no-formats {
-      color: var(--muted);
-      font-size: 0.9rem;
-      padding: 1rem;
-      background: #f9f9f9;
-      border-radius: 8px;
-    }
-    .convert-btn {
-      width: 100%;
-      padding: 1rem;
-      background: var(--green);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .convert-btn:hover:not(:disabled) {
-      background: var(--green-light);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(15,110,86,0.3);
-    }
+    .format-btn.active { background: var(--green); color: white; border-color: var(--green); }
+    .no-formats { color: var(--muted); font-size: 0.9rem; padding: 1rem; background: #f9f9f9; border-radius: 8px; }
+    .convert-btn { width: 100%; padding: 1rem; background: var(--green); color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .convert-btn:hover:not(:disabled) { background: var(--green-light); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(15,110,86,0.3); }
     .convert-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
-    
-    /* Progress bar */
-    .progress-container {
-      display: none;
-      margin-top: 1.5rem;
-    }
+    .progress-container { display: none; margin-top: 1.5rem; }
     .progress-container.show { display: block; }
-    .progress-bar {
-      width: 100%;
-      height: 8px;
-      background: #e0e0e0;
-      border-radius: 4px;
-      overflow: hidden;
-      margin-bottom: 0.5rem;
-    }
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--green), var(--green-light));
-      width: 0%;
-      transition: width 0.2s;
-      border-radius: 4px;
-    }
-    .progress-text {
-      font-size: 0.85rem;
-      color: var(--muted);
-      text-align: center;
-    }
-    
-    .status {
-      margin-top: 1.5rem;
-      padding: 1rem;
-      border-radius: 8px;
-      text-align: center;
-      display: none;
-      font-weight: 500;
-      min-height: 24px;
-    }
+    .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--green-light)); width: 0%; transition: width 0.2s; border-radius: 4px; }
+    .progress-text { font-size: 0.85rem; color: var(--muted); text-align: center; }
+    .status { margin-top: 1.5rem; padding: 1rem; border-radius: 8px; text-align: center; display: none; font-weight: 500; min-height: 24px; }
     .status.show { display: block; }
     .status.error   { background: #FEE2E2; color: #DC2626; }
     .status.success { background: var(--green-pale); color: var(--green); }
     .status.loading { background: #EFF6FF; color: #2563EB; }
-    
-    .supported-formats {
-      margin-top: 3rem;
-      padding-top: 2rem;
-      border-top: 1px solid var(--border);
-    }
+    .supported-formats { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
     .format-category { margin-bottom: 1.5rem; }
     .category-title { font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
     .format-list { color: var(--muted); font-size: 0.9rem; }
-    .back-link {
-      display: inline-block;
-      margin-top: 2rem;
-      color: var(--green);
-      font-weight: 600;
-      text-decoration: none;
-    }
+    .back-link { display: inline-block; margin-top: 2rem; color: var(--green); font-weight: 600; text-decoration: none; }
     .back-link:hover { text-decoration: underline; }
-    .ad-block {
-      margin-top: 2rem;
-      padding: 1rem;
-      background: #f9f9f9;
-      border-radius: 8px;
-      text-align: center;
-    }
+    .ad-block { margin-top: 2rem; padding: 1rem; background: #f9f9f9; border-radius: 8px; text-align: center; }
     .ad-label { font-size: 0.7rem; color: #999; margin-bottom: 0.5rem; }
   </style>
 </head>
@@ -224,14 +90,18 @@
 
     <div class="converter-card">
 
-      <!-- Merge PDF banner -->
-      <div class="merge-banner">
-        <span>🔗 Want to combine multiple PDFs into one?</span>
-        <a href="/merge">Merge PDFs →</a>
+      <!-- PDF Tools -->
+      <div class="pdf-tools">
+        <div class="pdf-tools-label">PDF Tools</div>
+        <div class="pdf-tools-grid">
+          <a href="/merge"    class="pdf-tool-btn">🔗 Merge PDFs</a>
+          <a href="/split"    class="pdf-tool-btn">✂️ Split PDF</a>
+          <a href="/compress" class="pdf-tool-btn">🗜️ Compress PDF</a>
+          <a href="/rotate"   class="pdf-tool-btn">🔄 Rotate PDF</a>
+        </div>
       </div>
 
       <form id="converterForm" enctype="multipart/form-data">
-
         <div class="upload-area" id="uploadArea">
           <div class="upload-icon">📁</div>
           <div class="upload-text">Click to upload or drag &amp; drop</div>
@@ -252,15 +122,10 @@
 
         <input type="hidden" id="outputFormatInput" name="output_format" value="">
 
-        <button type="submit" class="convert-btn" id="convertBtn" disabled>
-          Convert File
-        </button>
+        <button type="submit" class="convert-btn" id="convertBtn" disabled>Convert File</button>
 
-        <!-- Progress bar -->
         <div class="progress-container" id="progressContainer">
-          <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
-          </div>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
           <div class="progress-text" id="progressText">0%</div>
         </div>
 
@@ -268,11 +133,7 @@
 
         <div class="ad-block">
           <div class="ad-label">ADVERTISEMENT</div>
-          <ins class="adsbygoogle" style="display:block"
-               data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-               data-ad-slot="XXXXXXXXXX"
-               data-ad-format="auto"
-               data-full-width-responsive="true"></ins>
+          <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5045643961662031" data-ad-slot="XXXXXXXXXX" data-ad-format="auto" data-full-width-responsive="true"></ins>
           <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
         </div>
       </form>
@@ -305,11 +166,7 @@
 
       <div class="ad-block">
         <div class="ad-label">ADVERTISEMENT</div>
-        <ins class="adsbygoogle" style="display:block"
-             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-             data-ad-slot="XXXXXXXXXX"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5045643961662031" data-ad-slot="XXXXXXXXXX" data-ad-format="auto" data-full-width-responsive="true"></ins>
         <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
       </div>
     </div>
@@ -337,8 +194,7 @@
       json: ['csv', 'xlsx', 'html', 'txt'],
     };
 
-    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
-
+    const MAX_FILE_SIZE = 15 * 1024 * 1024;
     const uploadArea        = document.getElementById('uploadArea');
     const fileInput         = document.getElementById('fileInput');
     const fileInfo          = document.getElementById('fileInfo');
@@ -354,62 +210,34 @@
     const progressFill      = document.getElementById('progressFill');
     const progressText      = document.getElementById('progressText');
 
-    let selectedFile   = null;
-    let selectedFormat = null;
+    let selectedFile = null, selectedFormat = null;
 
     uploadArea.addEventListener('click', () => fileInput.click());
     uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
     uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
-    uploadArea.addEventListener('drop', e => {
-      e.preventDefault();
-      uploadArea.classList.remove('dragover');
-      if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
-    });
-    fileInput.addEventListener('change', e => {
-      if (e.target.files.length > 0) handleFile(e.target.files[0]);
-    });
+    uploadArea.addEventListener('drop', e => { e.preventDefault(); uploadArea.classList.remove('dragover'); if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', e => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
 
     function handleFile(file) {
-      // File size check
-      if (file.size > MAX_FILE_SIZE) {
-        showStatus(`❌ File too large! Maximum size is 15MB (your file is ${formatSize(file.size)})`, 'error');
-        fileInput.value = '';
-        return;
-      }
-
-      selectedFile   = file;
-      selectedFormat = null;
-      outputFormatInput.value = '';
-      convertBtn.disabled = true;
+      if (file.size > MAX_FILE_SIZE) { showStatus(`❌ File too large! Max 15MB (yours is ${formatSize(file.size)})`, 'error'); fileInput.value = ''; return; }
+      selectedFile = file; selectedFormat = null; outputFormatInput.value = ''; convertBtn.disabled = true;
       const ext = file.name.split('.').pop().toLowerCase();
-      fileNameEl.textContent = file.name;
-      fileSizeEl.textContent = formatSize(file.size);
-      fileTypeEl.textContent = ext.toUpperCase();
-      fileInfo.classList.add('show');
-      buildFormatButtons(ext);
-      hideStatus();
+      fileNameEl.textContent = file.name; fileSizeEl.textContent = formatSize(file.size); fileTypeEl.textContent = ext.toUpperCase();
+      fileInfo.classList.add('show'); buildFormatButtons(ext); hideStatus();
     }
 
     function buildFormatButtons(ext) {
-      formatGrid.innerHTML = '';
-      selectedFormat = null;
+      formatGrid.innerHTML = ''; selectedFormat = null;
       const targets = CONVERSION_MAP[ext];
       if (!targets || targets.length === 0) {
         formatSel.style.display = 'block';
-        formatGrid.innerHTML = `<div class="no-formats">
-          No conversions available for .${ext} files.<br>
-          Supported: JPG, PNG, PDF, DOCX, TXT, XLSX, CSV and more.
-        </div>`;
-        convertBtn.disabled = true;
-        return;
+        formatGrid.innerHTML = `<div class="no-formats">No conversions available for .${ext} files.<br>Supported: JPG, PNG, PDF, DOCX, TXT, XLSX, CSV and more.</div>`;
+        convertBtn.disabled = true; return;
       }
       formatSel.style.display = 'block';
       targets.forEach(fmt => {
         const btn = document.createElement('button');
-        btn.type        = 'button';
-        btn.className   = 'format-btn';
-        btn.textContent = fmt.toUpperCase();
-        btn.dataset.format = fmt;
+        btn.type = 'button'; btn.className = 'format-btn'; btn.textContent = fmt.toUpperCase(); btn.dataset.format = fmt;
         btn.addEventListener('click', () => selectFormat(fmt, btn));
         formatGrid.appendChild(btn);
       });
@@ -417,110 +245,52 @@
 
     function selectFormat(fmt, btn) {
       document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedFormat = fmt;
-      outputFormatInput.value = fmt;
-      convertBtn.disabled = false;
+      btn.classList.add('active'); selectedFormat = fmt; outputFormatInput.value = fmt; convertBtn.disabled = false;
     }
 
     document.getElementById('converterForm').addEventListener('submit', async e => {
       e.preventDefault();
-      if (!selectedFile || !selectedFormat) {
-        showStatus('Please select a file and a target format.', 'error');
-        return;
-      }
-
+      if (!selectedFile || !selectedFormat) { showStatus('Please select a file and a target format.', 'error'); return; }
       const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('output_format', selectedFormat);
-
-      convertBtn.disabled = true;
-      convertBtn.textContent = 'Converting…';
-      progressContainer.classList.add('show');
-      showStatus('📤 Uploading file...', 'loading');
-
-      try {
-        // Use XMLHttpRequest to track upload progress
-        const xhr = new XMLHttpRequest();
-
-        // Track upload progress
-        xhr.upload.addEventListener('progress', e => {
-          if (e.lengthComputable) {
-            const percentComplete = Math.round((e.loaded / e.total) * 100);
-            progressFill.style.width = percentComplete + '%';
-            progressText.textContent = percentComplete + '%';
-            showStatus(`📤 Uploading... ${percentComplete}%`, 'loading');
-          }
-        });
-
-        // Handle completion
-        xhr.addEventListener('load', () => {
-          if (xhr.status === 200) {
-            // Animate progress to 100% if not already
-            progressFill.style.width = '100%';
-            progressText.textContent = '100%';
-            showStatus('⚙️ Processing your file...', 'loading');
-
-            // Simulate processing time with animated message
-            setTimeout(() => {
-              showStatus('✓ Conversion complete! Downloading...', 'success');
-              const blob = new Blob([xhr.response], { type: 'application/octet-stream' });
-              const url  = URL.createObjectURL(blob);
-              const a    = document.createElement('a');
-              a.href     = url;
-              a.download = selectedFile.name.replace(/\.[^.]+$/, '') + '.' + selectedFormat;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
-              resetProgress();
-            }, 500);
-          } else {
-            let msg = 'Conversion failed.';
-            try {
-              const json = JSON.parse(xhr.responseText);
-              msg = json.error || msg;
-            } catch (_) {}
-            showStatus('Error: ' + msg, 'error');
+      formData.append('file', selectedFile); formData.append('output_format', selectedFormat);
+      convertBtn.disabled = true; convertBtn.textContent = 'Converting…';
+      progressContainer.classList.add('show'); showStatus('📤 Uploading file...', 'loading');
+      const xhr = new XMLHttpRequest();
+      xhr.upload.addEventListener('progress', e => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          progressFill.style.width = pct + '%'; progressText.textContent = pct + '%';
+          showStatus(`📤 Uploading... ${pct}%`, 'loading');
+        }
+      });
+      xhr.addEventListener('load', () => {
+        progressFill.style.width = '100%'; progressText.textContent = '100%';
+        if (xhr.status === 200) {
+          showStatus('⚙️ Processing your file...', 'loading');
+          setTimeout(() => {
+            showStatus('✓ Conversion complete! Downloading...', 'success');
+            const blob = new Blob([xhr.response], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url;
+            a.download = selectedFile.name.replace(/\.[^.]+$/, '') + '.' + selectedFormat;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
             resetProgress();
-          }
-        });
-
-        // Handle errors
-        xhr.addEventListener('error', () => {
-          showStatus('Network error during conversion.', 'error');
-          resetProgress();
-        });
-
-        xhr.responseType = 'arraybuffer';
-        xhr.open('POST', '/convert');
-        xhr.send(formData);
-
-      } catch (err) {
-        showStatus('Error: ' + err.message, 'error');
-        resetProgress();
-      } finally {
-        convertBtn.disabled = false;
-        convertBtn.textContent = 'Convert File';
-      }
+          }, 500);
+        } else {
+          let msg = 'Conversion failed.';
+          try { msg = JSON.parse(xhr.responseText).error || msg; } catch (_) {}
+          showStatus('Error: ' + msg, 'error'); resetProgress();
+        }
+      });
+      xhr.addEventListener('error', () => { showStatus('Network error during conversion.', 'error'); resetProgress(); });
+      xhr.responseType = 'arraybuffer'; xhr.open('POST', '/convert'); xhr.send(formData);
+      convertBtn.disabled = false; convertBtn.textContent = 'Convert File';
     });
 
-    function resetProgress() {
-      progressFill.style.width = '0%';
-      progressText.textContent = '0%';
-      progressContainer.classList.remove('show');
-    }
-
-    function showStatus(msg, type) {
-      statusEl.textContent = msg;
-      statusEl.className   = 'status show ' + type;
-    }
+    function resetProgress() { progressFill.style.width = '0%'; progressText.textContent = '0%'; progressContainer.classList.remove('show'); }
+    function showStatus(msg, type) { statusEl.textContent = msg; statusEl.className = 'status show ' + type; }
     function hideStatus() { statusEl.className = 'status'; }
-    function formatSize(bytes) {
-      if (bytes < 1024)    return bytes + ' B';
-      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-      return (bytes / 1048576).toFixed(1) + ' MB';
-    }
+    function formatSize(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b/1024).toFixed(1) + ' KB'; return (b/1048576).toFixed(1) + ' MB'; }
   </script>
 </body>
 </html>

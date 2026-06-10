@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rotate PDF — ConverterPro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --green: #0F6E56; --green-light: #1D9E75; --green-pale: #E8F5F0; --text: #1A1A2E; --muted: #6B7280; --border: #E5E7EB; }
+    body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #f0faf6 0%, #ffffff 60%); min-height: 100vh; padding: 2rem; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 3rem; }
+    .logo { font-size: 1.8rem; font-weight: 800; color: var(--green); margin-bottom: 1rem; }
+    h1 { font-size: 2.5rem; font-weight: 800; color: var(--text); margin-bottom: 0.5rem; }
+    .subtitle { font-size: 1.1rem; color: var(--muted); }
+    .card { background: white; border-radius: 16px; padding: 3rem; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+    .drop-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 3rem; text-align: center; cursor: pointer; transition: all 0.3s; margin-bottom: 2rem; }
+    .drop-zone:hover, .drop-zone.dragover { border-color: var(--green); background: var(--green-pale); }
+    .drop-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .drop-text { font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+    .drop-hint { font-size: 0.9rem; color: var(--muted); }
+    input[type="file"] { display: none; }
+    .file-info { background: var(--green-pale); border-radius: 8px; padding: 1rem; margin-bottom: 2rem; display: none; }
+    .file-info.show { display: block; }
+    .file-name { font-weight: 600; color: var(--text); margin-bottom: 0.25rem; }
+    .file-size { font-size: 0.85rem; color: var(--muted); }
+    /* Rotation selector */
+    .rotation-label { font-weight: 600; color: var(--text); margin-bottom: 0.75rem; display: block; }
+    .rotation-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .rotation-btn { padding: 1.25rem 0.75rem; border: 2px solid var(--border); border-radius: 12px; background: white; cursor: pointer; font-weight: 700; font-size: 0.9rem; transition: all 0.2s; text-align: center; }
+    .rotation-btn .icon { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+    .rotation-btn .label { display: block; color: var(--text); }
+    .rotation-btn .desc { display: block; font-size: 0.75rem; color: var(--muted); font-weight: 400; margin-top: 0.25rem; }
+    .rotation-btn:hover { border-color: var(--green); }
+    .rotation-btn.active { background: var(--green); border-color: var(--green); }
+    .rotation-btn.active .label, .rotation-btn.active .desc { color: white; }
+    .action-btn { width: 100%; padding: 1rem; background: var(--green); color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .action-btn:hover:not(:disabled) { background: var(--green-light); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(15,110,86,0.3); }
+    .action-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+    .progress-container { display: none; margin-top: 1.5rem; }
+    .progress-container.show { display: block; }
+    .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--green-light)); width: 0%; transition: width 0.2s; border-radius: 4px; }
+    .progress-text { font-size: 0.85rem; color: var(--muted); text-align: center; }
+    .status { margin-top: 1.5rem; padding: 1rem; border-radius: 8px; text-align: center; display: none; font-weight: 500; }
+    .status.show { display: block; }
+    .status.error { background: #FEE2E2; color: #DC2626; }
+    .status.success { background: var(--green-pale); color: var(--green); }
+    .status.loading { background: #EFF6FF; color: #2563EB; }
+    .links-row { display: flex; gap: 2rem; margin-top: 2rem; flex-wrap: wrap; }
+    .back-link { display: inline-block; margin-top: 2rem; color: var(--green); font-weight: 600; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">ConverterPro</div>
+      <h1>🔄 Rotate PDF</h1>
+      <p class="subtitle">Rotate all pages in your PDF — 90°, 180°, or 270°</p>
+    </div>
+    <div class="card">
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon">📄</div>
+        <div class="drop-text">Click to upload a PDF or drag &amp; drop</div>
+        <div class="drop-hint">Max 15MB — all pages will be rotated</div>
+      </div>
+      <input type="file" id="fileInput" accept=".pdf">
+
+      <div class="file-info" id="fileInfo">
+        <div class="file-name" id="fileName"></div>
+        <div class="file-size" id="fileSize"></div>
+      </div>
+
+      <span class="rotation-label">Choose rotation:</span>
+      <div class="rotation-grid">
+        <button type="button" class="rotation-btn active" data-angle="rotate_90">
+          <span class="icon">↻</span>
+          <span class="label">90° Clockwise</span>
+          <span class="desc">Rotate right</span>
+        </button>
+        <button type="button" class="rotation-btn" data-angle="rotate_180">
+          <span class="icon">↕️</span>
+          <span class="label">180°</span>
+          <span class="desc">Flip upside down</span>
+        </button>
+        <button type="button" class="rotation-btn" data-angle="rotate_270">
+          <span class="icon">↺</span>
+          <span class="label">270° Clockwise</span>
+          <span class="desc">Rotate left</span>
+        </button>
+      </div>
+
+      <button type="button" class="action-btn" id="actionBtn" disabled>Rotate PDF</button>
+
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-text" id="progressText">0%</div>
+      </div>
+      <div class="status" id="status"></div>
+
+      <div class="links-row">
+        <a href="/converter" class="back-link">← File Converter</a>
+        <a href="/merge" class="back-link">🔗 Merge PDFs</a>
+        <a href="/split" class="back-link">✂️ Split PDF</a>
+        <a href="/compress" class="back-link">🗜️ Compress PDF</a>
+        <a href="/" class="back-link">← Home</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    const MAX_SIZE = 15 * 1024 * 1024;
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileNameEl = document.getElementById('fileName');
+    const fileSizeEl = document.getElementById('fileSize');
+    const actionBtn = document.getElementById('actionBtn');
+    const statusEl = document.getElementById('status');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    let selectedFile = null;
+    let selectedAngle = 'rotate_90';
+
+    // Rotation buttons
+    document.querySelectorAll('.rotation-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.rotation-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedAngle = btn.dataset.angle;
+      });
+    });
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+    function handleFile(file) {
+      if (!file.name.toLowerCase().endsWith('.pdf')) { showStatus('❌ Please upload a PDF file.', 'error'); return; }
+      if (file.size > MAX_SIZE) { showStatus('❌ File too large. Max 15MB.', 'error'); return; }
+      selectedFile = file;
+      fileNameEl.textContent = file.name;
+      fileSizeEl.textContent = formatSize(file.size);
+      fileInfo.classList.add('show');
+      actionBtn.disabled = false;
+      hideStatus();
+    }
+
+    actionBtn.addEventListener('click', () => {
+      if (!selectedFile) return;
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('output_format', selectedAngle);
+      actionBtn.disabled = true;
+      actionBtn.textContent = 'Rotating…';
+      progressContainer.classList.add('show');
+      showStatus('📤 Uploading...', 'loading');
+      const xhr = new XMLHttpRequest();
+      xhr.upload.addEventListener('progress', e => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          progressFill.style.width = pct + '%';
+          progressText.textContent = pct + '%';
+          showStatus(`📤 Uploading... ${pct}%`, 'loading');
+        }
+      });
+      xhr.addEventListener('load', () => {
+        progressFill.style.width = '100%';
+        progressText.textContent = '100%';
+        if (xhr.status === 200) {
+          showStatus('⚙️ Rotating pages...', 'loading');
+          setTimeout(() => {
+            showStatus('✓ PDF rotated! Downloading...', 'success');
+            const blob = new Blob([xhr.response], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const deg = selectedAngle.split('_')[1];
+            a.download = selectedFile.name.replace('.pdf', `_rotated_${deg}.pdf`);
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            resetProgress();
+          }, 500);
+        } else {
+          let msg = 'Rotation failed.';
+          try { msg = JSON.parse(xhr.responseText).error || msg; } catch (_) {}
+          showStatus('Error: ' + msg, 'error');
+          resetProgress();
+        }
+      });
+      xhr.addEventListener('error', () => { showStatus('Network error.', 'error'); resetProgress(); });
+      xhr.responseType = 'arraybuffer';
+      xhr.open('POST', '/convert');
+      xhr.send(formData);
+      actionBtn.disabled = false;
+      actionBtn.textContent = 'Rotate PDF';
+    });
+
+    function resetProgress() { progressFill.style.width = '0%'; progressText.textContent = '0%'; progressContainer.classList.remove('show'); }
+    function showStatus(msg, type) { statusEl.textContent = msg; statusEl.className = 'status show ' + type; }
+    function hideStatus() { statusEl.className = 'status'; }
+    function formatSize(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b/1024).toFixed(1) + ' KB'; return (b/1048576).toFixed(1) + ' MB'; }
+  </script>
+</body>
+</html>

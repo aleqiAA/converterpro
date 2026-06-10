@@ -393,6 +393,21 @@ def merge():
     return render_template("merge.html")
 
 
+@app.route("/split")
+def split():
+    return render_template("split.html")
+
+
+@app.route("/compress")
+def compress():
+    return render_template("compress.html")
+
+
+@app.route("/rotate")
+def rotate():
+    return render_template("rotate.html")
+
+
 @app.route("/convert", methods=["POST"])
 def convert():
     if "file" not in request.files:
@@ -429,12 +444,30 @@ def convert():
         with open(output_path, "rb") as f:
             file_bytes = f.read()
 
-        base_name     = os.path.splitext(uploaded.filename)[0]
-        download_name = f"{base_name}_merged.pdf" if output_format == 'merge' else f"{base_name}.{output_format}"
+        base_name = os.path.splitext(uploaded.filename)[0]
+
+        # Build correct download filename
+        if output_format == 'merge':
+            download_name = f"{base_name}_merged.pdf"
+        elif output_format == 'split':
+            download_name = f"{base_name}_pages.zip"
+        elif output_format == 'compress':
+            download_name = f"{base_name}_compressed.pdf"
+        elif output_format in ('rotate_90', 'rotate_180', 'rotate_270'):
+            deg = output_format.split('_')[1]
+            download_name = f"{base_name}_rotated_{deg}.pdf"
+        else:
+            download_name = f"{base_name}.{output_format}"
 
         mime_map = {
-            "pdf":   "application/pdf",
-            "merge": "application/pdf",
+            "pdf":        "application/pdf",
+            "merge":      "application/pdf",
+            "compress":   "application/pdf",
+            "rotate_90":  "application/pdf",
+            "rotate_180": "application/pdf",
+            "rotate_270": "application/pdf",
+            "split":      "application/zip",
+            "zip":        "application/zip",
             "docx":  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             "xlsx":  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "txt":   "text/plain",
