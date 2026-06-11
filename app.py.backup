@@ -408,21 +408,6 @@ def rotate():
     return render_template("rotate.html")
 
 
-@app.route("/delete-pages")
-def delete_pages():
-    return render_template("delete_pages.html")
-
-
-@app.route("/extract-pages")
-def extract_pages():
-    return render_template("extract_pages.html")
-
-
-@app.route("/add-watermark")
-def add_watermark():
-    return render_template("add_watermark.html")
-
-
 @app.route("/convert", methods=["POST"])
 def convert():
     if "file" not in request.files:
@@ -446,7 +431,6 @@ def convert():
             tmp_input_path = tmp_input.name
         uploaded.save(tmp_input_path)
 
-        # Handle special PDF operations
         if output_format == 'merge' and 'mergeFiles' in request.files:
             for f in request.files.getlist('mergeFiles'):
                 if f.filename:
@@ -455,23 +439,7 @@ def convert():
                     f.save(merge_tmp.name)
                     merge_paths.append(merge_tmp.name)
 
-        if output_format == 'delete_pages':
-            page_numbers = request.form.get("page_numbers", "").strip()
-            if not page_numbers:
-                return jsonify({"error": "Please specify page numbers to delete"}), 400
-            output_path = convert_file(tmp_input_path, output_format, page_numbers=page_numbers)
-        elif output_format == 'extract_pages':
-            page_numbers = request.form.get("page_numbers", "").strip()
-            if not page_numbers:
-                return jsonify({"error": "Please specify page numbers to extract"}), 400
-            output_path = convert_file(tmp_input_path, output_format, page_numbers=page_numbers)
-        elif output_format == 'add_watermark':
-            watermark_text = request.form.get("watermark_text", "").strip()
-            if not watermark_text:
-                return jsonify({"error": "Please enter watermark text"}), 400
-            output_path = convert_file(tmp_input_path, output_format, watermark_text=watermark_text)
-        else:
-            output_path = convert_file(tmp_input_path, output_format, merge_paths=merge_paths)
+        output_path = convert_file(tmp_input_path, output_format, merge_paths=merge_paths)
 
         with open(output_path, "rb") as f:
             file_bytes = f.read()
@@ -488,12 +456,6 @@ def convert():
         elif output_format in ('rotate_90', 'rotate_180', 'rotate_270'):
             deg = output_format.split('_')[1]
             download_name = f"{base_name}_rotated_{deg}.pdf"
-        elif output_format == 'delete_pages':
-            download_name = f"{base_name}_deleted.pdf"
-        elif output_format == 'extract_pages':
-            download_name = f"{base_name}_extracted.pdf"
-        elif output_format == 'add_watermark':
-            download_name = f"{base_name}_watermarked.pdf"
         else:
             download_name = f"{base_name}.{output_format}"
 
@@ -506,9 +468,6 @@ def convert():
             "rotate_270": "application/pdf",
             "split":      "application/zip",
             "zip":        "application/zip",
-            "delete_pages": "application/pdf",
-            "extract_pages": "application/pdf",
-            "add_watermark": "application/pdf",
             "docx":  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             "xlsx":  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "txt":   "text/plain",
