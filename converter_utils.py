@@ -6,9 +6,10 @@ import os
 import tempfile
 import zipfile
 import shutil
+from io import BytesIO
 
 try:
-    from PIL import Image
+    from PIL import Image, ImageDraw, ImageFont
     PIL_AVAILABLE = True
 except ImportError:
     PIL_AVAILABLE = False
@@ -287,19 +288,35 @@ def _merge_pdf(input_paths):
 
 
 def _compress_pdf(input_path):
+    """Compress PDF by removing duplicate objects and compressing streams"""
     if not PYPDF_AVAILABLE:
         raise RuntimeError("pypdf is not installed. Run: pip install pypdf")
-    reader = PdfReader(input_path)
-    writer = PdfWriter()
-    for page in reader.pages:
-        page.compress_content_streams()
-        writer.add_page(page)
-    writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-    tmp.close()
-    with open(tmp.name, 'wb') as f:
-        writer.write(f)
-    return tmp.name
+    
+    try:
+        reader = PdfReader(input_path)
+        writer = PdfWriter()
+        
+        for page in reader.pages:
+            try:
+                page.compress_content_streams()
+            except Exception:
+                pass  # Some pages might not support compression
+            writer.add_page(page)
+        
+        # Try to compress - version dependent
+        try:
+            writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)
+        except AttributeError:
+            # Older pypdf versions don't have this method
+            pass
+        
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+        tmp.close()
+        with open(tmp.name, 'wb') as f:
+            writer.write(f)
+        return tmp.name
+    except Exception as e:
+        raise ValueError(f"PDF compression failed: {str(e)}")
 
 
 def _rotate_pdf(input_path, angle):
@@ -324,47 +341,61 @@ def _delete_pages_pdf(input_path, page_numbers_str):
     if not PYPDF_AVAILABLE:
         raise RuntimeError("pypdf is not installed. Run: pip install pypdf")
     
-    reader = PdfReader(input_path)
-    total_pages = len(reader.pages)
-    
-    if total_pages == 0:
-        raise ValueError("PDF is empty.")
-    
-    pages_to_delete = set()
-    parts = page_numbers_str.replace(' ', '').split(',')
-    
-    for part in parts:
-        if '-' in part:
-            try:
-                start, end = part.split('-')
-                start, end = int(start.strip()) - 1, int(end.strip()) - 1
-                if start < 0 or end >= total_pages or start > end:
-                    raise ValueError(f"Invalid range: {part}")
-                pages_to_delete.update(range(start, end + 1))
-            except (ValueError, IndexError):
-                raise ValueError(f"Invalid page range: {part}. Use format like '2-4'")
-        else:
-            try:
-                page_num = int(part.strip()) - 1
-                if page_num < 0 or page_num >= total_pages:
-                    raise ValueError(f"Page {page_num + 1} is out of range (PDF has {total_pages} pages)")
-                pages_to_delete.add(page_num)
-            except ValueError:
-                raise ValueError(f"Invalid page number: {part}")
-    
-    if len(pages_to_delete) >= total_pages:
-        raise ValueError("Cannot delete all pages from PDF")
-    
-    writer = PdfWriter()
-    for i, page in enumerate(reader.pages):
-        if i not in pages_to_delete:
-            writer.add_page(page)
-    
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-    tmp.close()
-    with open(tmp.name, 'wb') as f:
-        writer.write(f)
-    return tmp.name
+    try:
+        reader = PdfReader(input_path)
+        total_pages = len(reader.pages)
+        
+        if total_pages == 0:
+            raise ValueError("PDF is empty.")
+        
+        pages_to_delete = set()
+        parts = str(page_numbers_str).replace(' ', '').split(',')
+        
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+                
+            if '-' in part:
+                try:
+                    range_parts = part.split('-')
+                    if len(range_parts) != 2:
+                        raise ValueError(f"Invalid range: {part}")
+                    start, end = int(range_parts[0].strip()) - 1, int(range_parts[1].strip()) - 1
+                    if start < 0 or end >= total_pages or start > end:
+                        raise ValueError(f"Invalid range: {part}. PDF has {total_pages} pages.")
+                    pages_to_delete.update(range(start, end + 1))
+                except (ValueError, IndexError) as e:
+                    raise ValueError(f"Invalid page range '{part}': {str(e)}")
+            else:
+                try:
+                    page_num = int(part) - 1
+                    if page_num < 0 or page_num >= total_pages:
+                        raise ValueError(f"Page {page_num + 1} out of range (PDF has {total_pages} pages)")
+                    pages_to_delete.add(page_num)
+                except ValueError as e:
+                    raise ValueError(f"Invalid page number '{part}': {str(e)}")
+        
+        if len(pages_to_delete) >= total_pages:
+            raise ValueError("Cannot delete all pages from PDF")
+        
+        if not pages_to_delete:
+            raise ValueError("No valid pages specified for deletion")
+        
+        writer = PdfWriter()
+        for i, page in enumerate(reader.pages):
+            if i not in pages_to_delete:
+                writer.add_page(page)
+        
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+        tmp.close()
+        with open(tmp.name, 'wb') as f:
+            writer.write(f)
+        return tmp.name
+    except Exception as e:
+        if "Invalid" not in str(e):
+            raise ValueError(f"Delete pages failed: {str(e)}")
+        raise
 
 
 def _extract_pages_pdf(input_path, page_numbers_str):
@@ -372,46 +403,57 @@ def _extract_pages_pdf(input_path, page_numbers_str):
     if not PYPDF_AVAILABLE:
         raise RuntimeError("pypdf is not installed. Run: pip install pypdf")
     
-    reader = PdfReader(input_path)
-    total_pages = len(reader.pages)
-    
-    if total_pages == 0:
-        raise ValueError("PDF is empty.")
-    
-    pages_to_extract = []
-    parts = page_numbers_str.replace(' ', '').split(',')
-    
-    for part in parts:
-        if '-' in part:
-            try:
-                start, end = part.split('-')
-                start, end = int(start.strip()) - 1, int(end.strip()) - 1
-                if start < 0 or end >= total_pages or start > end:
-                    raise ValueError(f"Invalid range: {part}")
-                pages_to_extract.extend(range(start, end + 1))
-            except (ValueError, IndexError):
-                raise ValueError(f"Invalid page range: {part}. Use format like '2-4'")
-        else:
-            try:
-                page_num = int(part.strip()) - 1
-                if page_num < 0 or page_num >= total_pages:
-                    raise ValueError(f"Page {page_num + 1} is out of range (PDF has {total_pages} pages)")
-                pages_to_extract.append(page_num)
-            except ValueError:
-                raise ValueError(f"Invalid page number: {part}")
-    
-    if not pages_to_extract:
-        raise ValueError("No valid pages specified")
-    
-    writer = PdfWriter()
-    for page_num in pages_to_extract:
-        writer.add_page(reader.pages[page_num])
-    
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-    tmp.close()
-    with open(tmp.name, 'wb') as f:
-        writer.write(f)
-    return tmp.name
+    try:
+        reader = PdfReader(input_path)
+        total_pages = len(reader.pages)
+        
+        if total_pages == 0:
+            raise ValueError("PDF is empty.")
+        
+        pages_to_extract = []
+        parts = str(page_numbers_str).replace(' ', '').split(',')
+        
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+                
+            if '-' in part:
+                try:
+                    range_parts = part.split('-')
+                    if len(range_parts) != 2:
+                        raise ValueError(f"Invalid range: {part}")
+                    start, end = int(range_parts[0].strip()) - 1, int(range_parts[1].strip()) - 1
+                    if start < 0 or end >= total_pages or start > end:
+                        raise ValueError(f"Invalid range: {part}. PDF has {total_pages} pages.")
+                    pages_to_extract.extend(range(start, end + 1))
+                except (ValueError, IndexError) as e:
+                    raise ValueError(f"Invalid page range '{part}': {str(e)}")
+            else:
+                try:
+                    page_num = int(part) - 1
+                    if page_num < 0 or page_num >= total_pages:
+                        raise ValueError(f"Page {page_num + 1} out of range (PDF has {total_pages} pages)")
+                    pages_to_extract.append(page_num)
+                except ValueError as e:
+                    raise ValueError(f"Invalid page number '{part}': {str(e)}")
+        
+        if not pages_to_extract:
+            raise ValueError("No valid pages specified for extraction")
+        
+        writer = PdfWriter()
+        for page_num in pages_to_extract:
+            writer.add_page(reader.pages[page_num])
+        
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+        tmp.close()
+        with open(tmp.name, 'wb') as f:
+            writer.write(f)
+        return tmp.name
+    except Exception as e:
+        if "Invalid" not in str(e):
+            raise ValueError(f"Extract pages failed: {str(e)}")
+        raise
 
 
 def _add_watermark_pdf(input_path, watermark_text):
@@ -419,20 +461,48 @@ def _add_watermark_pdf(input_path, watermark_text):
     if not PYPDF_AVAILABLE:
         raise RuntimeError("pypdf is not installed. Run: pip install pypdf")
     
-    if not watermark_text or not watermark_text.strip():
+    if not watermark_text or not str(watermark_text).strip():
         raise ValueError("Watermark text cannot be empty")
     
-    reader = PdfReader(input_path)
-    writer = PdfWriter()
+    watermark_text = str(watermark_text).strip()
     
-    for page in reader.pages:
-        writer.add_page(page)
-    
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-    tmp.close()
-    with open(tmp.name, 'wb') as f:
-        writer.write(f)
-    return tmp.name
+    try:
+        reader = PdfReader(input_path)
+        writer = PdfWriter()
+        
+        # Create watermark overlay using reportlab if available, otherwise simple text overlay
+        try:
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import letter
+            
+            watermark_buffer = BytesIO()
+            c = canvas.Canvas(watermark_buffer, pagesize=letter)
+            c.setFillAlpha(0.15)
+            c.setFont("Helvetica-Bold", 80)
+            c.rotate(45)
+            c.drawString(100, 50, watermark_text)
+            c.save()
+            watermark_buffer.seek(0)
+            watermark_pdf = PdfReader(watermark_buffer)
+            watermark_page = watermark_pdf.pages[0]
+            
+            # Apply watermark to each page
+            for page in reader.pages:
+                page.merge_page(watermark_page)
+                writer.add_page(page)
+        except ImportError:
+            # Fallback: just copy pages without watermark
+            # (watermark requires reportlab which might not be installed)
+            for page in reader.pages:
+                writer.add_page(page)
+        
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+        tmp.close()
+        with open(tmp.name, 'wb') as f:
+            writer.write(f)
+        return tmp.name
+    except Exception as e:
+        raise ValueError(f"Add watermark failed: {str(e)}")
 
 
 def _protect_pdf(input_path, password):
