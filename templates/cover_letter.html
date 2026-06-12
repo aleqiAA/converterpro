@@ -46,6 +46,9 @@
     <p class="subtitle">AI-powered cover letter tailored to your CV <span class="price-badge">KES 30 add-on</span></p>
   </div>
 
+  <!-- Hidden CSRF token for fetch requests -->
+  <input type="hidden" id="csrfToken" value="{{ csrf_token() }}">
+
   {% if not ai_available %}
   <div class="no-ai-box">
     <p><strong>AI not configured.</strong> To enable cover letter generation, add your OpenAI API key to <code>.env</code>:</p>
@@ -109,6 +112,7 @@
 async function generateLetter() {
   const btn = document.getElementById('generateBtn');
   const spinner = document.getElementById('spinner');
+  const csrfToken = document.getElementById('csrfToken').value;
   btn.disabled = true; btn.textContent = 'Generating...';
   spinner.style.display = 'block';
 
@@ -117,7 +121,13 @@ async function generateLetter() {
   fd.append('company',   document.getElementById('company').value);
 
   try {
-    const resp = await fetch('/cover-letter', {method:'POST', body:fd});
+    const resp = await fetch('/cover-letter', {
+      method:'POST', 
+      body:fd,
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
+    });
     if (resp.ok) {
       // PDF download
       const blob = await resp.blob();
@@ -144,5 +154,3 @@ async function generateLetter() {
 </script>
 </body>
 </html>
-
-

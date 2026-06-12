@@ -55,6 +55,9 @@
     <p class="subtitle">Find out how well your CV performs with Applicant Tracking Systems</p>
   </div>
 
+  <!-- Hidden CSRF token for fetch requests -->
+  <input type="hidden" id="csrfToken" value="{{ csrf_token() }}">
+
   {% if not has_cv %}
   <div class="no-cv-box">
     <h3>No CV Found</h3>
@@ -132,6 +135,7 @@ async function runCheck() {
   const spinner = document.getElementById('spinner');
   const results = document.getElementById('results');
   const jd = document.getElementById('jd').value;
+  const csrfToken = document.getElementById('csrfToken').value;
 
   btn.disabled = true; btn.textContent = 'Checking...';
   spinner.style.display = 'block';
@@ -141,7 +145,13 @@ async function runCheck() {
   fd.append('job_description', jd);
 
   try {
-    const resp = await fetch('/ats-check', {method:'POST', body:fd});
+    const resp = await fetch('/ats-check', {
+      method:'POST', 
+      body:fd,
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
+    });
     const data = await resp.json();
     if (data.error) { alert('Error: ' + data.error); return; }
     renderResults(data);
@@ -197,5 +207,3 @@ function renderResults(d) {
 </script>
 </body>
 </html>
-
-

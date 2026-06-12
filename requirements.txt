@@ -1,9 +1,29 @@
-Flask==3.0.0
-python-dotenv==1.0.0
-Werkzeug==3.0.1
-gunicorn==21.2.0
-stripe==7.8.0
-pypdf
+# Core Framework - SECURITY UPDATES
+Flask==3.1.3
+Werkzeug==3.1.6
+gunicorn==22.0.0
+
+# Configuration
+python-dotenv==1.2.2
+
+# PDF Processing - SECURITY UPDATE (22 CVEs fixed)
+pypdf==6.10.2
 python-docx
+
+# Image Processing - SECURITY UPDATE
+Pillow==12.2.0
+
+# Security & Protection
+flask-talisman==1.1.0
+flask-limiter==3.5.0
+flask-wtf==1.2.1
+
+# File Magic
+python-magic-bin==0.4.14
+
+# Payments
+stripe==15.2.0
 intasend-python
-Pillow
+
+# Data Processing - SECURITY UPDATE (2 CVEs fixed)
+protobuf==6.33.5

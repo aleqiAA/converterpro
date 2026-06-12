@@ -37,6 +37,16 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.getenv("FLASK_ENV") == "production"
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 
+# ── HIGH #1: CSRF Protection via flask-wtf ────────────────────────────────────
+try:
+    from flask_wtf.csrf import CSRFProtect
+    csrf = CSRFProtect(app)
+    CSRF_AVAILABLE = True
+    logger.info("CSRF protection active")
+except ImportError:
+    logger.warning("flask-wtf not installed — run: pip install flask-wtf")
+    CSRF_AVAILABLE = False
+
 # ── CRITICAL #1: Max upload size — 15MB hard limit ────────────────────────────
 app.config["MAX_CONTENT_LENGTH"] = 15 * 1024 * 1024  # 15MB
 
@@ -90,7 +100,7 @@ try:
     MAGIC_AVAILABLE = True
 except ImportError:
     MAGIC_AVAILABLE = False
-    logger.warning("python-magic not installed — run: pip install python-magic")
+    logger.warning("python-magic not installed — run: pip install python-magic-bin")
 
 # Allowed MIME types per extension
 ALLOWED_MIME_MAP = {
@@ -157,6 +167,12 @@ except ImportError:
 def file_too_large(e):
     return jsonify({"error": "File too large. Maximum size is 15MB."}), 413
 
+# ── Error handler for CSRF failures ────────────────────────────────────────────
+@app.errorhandler(400)
+def csrf_error(e):
+    logger.warning(f"CSRF error: {e}")
+    return jsonify({"error": "Security validation failed. Please try again."}), 400
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def sanitize_text(text: str, max_length: int = 500) -> str:
@@ -212,7 +228,7 @@ def generate_pdf(cv_data: dict, template_name: str) -> str:
             pass
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
     tmp.close()
-    # base_url restricted to host only — prevents SSRF via WeasyPrint
+    # HIGH #2: base_url restricted to host only — prevents SSRF via WeasyPrint
     HTML(string=html_string, base_url=request.host_url).write_pdf(tmp.name)
     return tmp.name
 
@@ -615,7 +631,7 @@ def ats_check():
             }
         job_description = sanitize_text(request.form.get("job_description", ""), 5000)
         result = check_ats_score(cv_data, job_description)
-    return render_template("ats_check.html", result=result, cv=cv_data)
+    return render_template("ats_check.html", result=result, cv=cv_data, has_cv=bool(cv_data))
 
 @app.route("/cover-letter", methods=["GET", "POST"])
 def cover_letter():
@@ -629,7 +645,7 @@ def cover_letter():
             company   = sanitize_text(request.form.get("company", ""), 100)
             try: letter = generate_cover_letter(cv_data, job_title, company)
             except Exception as e: error = str(e)
-    return render_template("cover_letter.html", letter=letter, error=error, cv=cv_data)
+    return render_template("cover_letter.html", letter=letter, error=error, cv=cv_data, ai_available=OPENAI_AVAILABLE)
 
 @app.route("/parse-resume", methods=["POST"])
 def parse_resume_route():

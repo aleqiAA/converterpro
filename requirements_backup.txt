@@ -1,0 +1,9 @@
+Flask==3.0.0
+python-dotenv==1.0.0
+Werkzeug==3.0.1
+gunicorn==21.2.0
+stripe==7.8.0
+pypdf
+python-docx
+intasend-python
+Pillow
