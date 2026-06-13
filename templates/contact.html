@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact ConverterPro — Support & Feedback</title>
+  <meta name="description" content="Contact ConverterPro for support, bug reports, feature requests, or partnerships. Email us at support@converterpro.com or use our contact form.">
+  <meta name="keywords" content="contact ConverterPro, support, feedback, bug report, partnership">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --green: #0F6E56; --green-light: #1D9E75; --green-pale: #E8F5F0; --text: #1A1A2E; --muted: #6B7280; --border: #E5E7EB; }
+    body { font-family: 'Inter', sans-serif; background: #f9fafb; padding: 2rem 1rem; line-height: 1.6; color: var(--text); }
+    .container { max-width: 760px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 3rem; }
+    .logo { font-size: 1.8rem; font-weight: 800; color: var(--green); margin-bottom: 1rem; cursor: pointer; }
+    h1 { font-size: 2.5rem; font-weight: 800; color: var(--text); margin-bottom: 0.5rem; }
+    .subtitle { font-size: 1.1rem; color: var(--muted); margin-bottom: 2rem; }
+    .card { background: white; border-radius: 16px; padding: 2.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .contact-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+    .contact-box { background: var(--green-pale); border-radius: 12px; padding: 1.5rem; text-align: center; }
+    .contact-box h3 { color: var(--green); margin-bottom: 0.5rem; }
+    .contact-box p { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.75rem; }
+    .contact-box a { color: var(--green); text-decoration: none; font-weight: 700; word-break: break-all; }
+    .contact-box a:hover { text-decoration: underline; }
+    .form-group { margin-bottom: 1.5rem; }
+    label { display: block; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+    input, textarea { width: 100%; padding: 0.75rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; font-family: 'Inter', sans-serif; transition: border-color 0.2s; }
+    input:focus, textarea:focus { outline: none; border-color: var(--green); background: var(--green-pale); }
+    textarea { min-height: 150px; resize: vertical; }
+    .btn { width: 100%; padding: 1rem; background: var(--green); color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .btn:hover:not(:disabled) { background: var(--green-light); transform: translateY(-2px); }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .status { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: none; font-weight: 600; }
+    .status.success { background: var(--green-pale); color: var(--green); }
+    .status.error { background: #FEE2E2; color: #DC2626; }
+    .faq { margin-top: 3rem; }
+    .faq h2 { font-size: 1.8rem; color: var(--text); margin-bottom: 1.5rem; }
+    .faq-item { background: var(--green-pale); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; cursor: pointer; }
+    .faq-item h4 { color: var(--green); font-weight: 700; }
+    .faq-item p { display: none; margin-top: 0.75rem; color: var(--text); font-size: 0.95rem; }
+    .faq-item.open p { display: block; }
+    .nav-links { display: flex; justify-content: center; gap: 2rem; margin-top: 3rem; flex-wrap: wrap; }
+    .nav-link { color: var(--green); text-decoration: none; font-weight: 600; }
+    .nav-link:hover { text-decoration: underline; }
+    .footer { text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
+    @media (max-width: 600px) {
+      .contact-methods { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo" onclick="window.location.href='/'">ConverterPro</div>
+      <h1>Contact Us</h1>
+      <p class="subtitle">We'd love to hear from you. Get in touch anytime.</p>
+    </div>
+
+    <div class="card">
+      <div class="contact-methods">
+        <div class="contact-box">
+          <h3>📧 Email</h3>
+          <p>Send us your questions or feedback</p>
+          <a href="mailto:support@converterpro.com">support@converterpro.com</a>
+        </div>
+        <div class="contact-box">
+          <h3>🐦 Twitter</h3>
+          <p>Follow us and send a DM</p>
+          <a href="https://twitter.com/converterpro" target="_blank" rel="noopener">@converterpro</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Send us a Message</h2>
+      <div class="status" id="formStatus"></div>
+      <form id="contactForm" onsubmit="handleSubmit(event)">
+        <div class="form-group">
+          <label for="name">Your Name *</label>
+          <input type="text" id="name" name="name" required>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Your Email *</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+
+        <div class="form-group">
+          <label for="subject">Subject *</label>
+          <input type="text" id="subject" name="subject" placeholder="e.g., Bug report, Feature request, Partnership" required>
+        </div>
+
+        <div class="form-group">
+          <label for="message">Message *</label>
+          <textarea id="message" name="message" placeholder="Tell us what's on your mind..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn" id="submitBtn">Send Message</button>
+      </form>
+    </div>
+
+    <div class="card faq">
+      <h2>Frequently Asked Questions</h2>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <h4>❓ Is ConverterPro really free?</h4>
+        <p>Yes! All core features are 100% free. We don't charge for file conversions or the CV builder. Premium CV templates cost extra, but the free classic template is fully featured.</p>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <h4>🔒 Do you store my files?</h4>
+        <p>No. All files are deleted immediately after conversion. We don't store, track, or analyze your documents. Your privacy is guaranteed.</p>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <h4>💳 Why do you need my email/phone?</h4>
+        <p>We only ask for contact info when you download a paid CV template. For free file conversions, no personal info is needed.</p>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <h4>🚀 What file types do you support?</h4>
+        <p>We support PDFs, images (PNG, JPG, GIF, WebP), documents (DOCX, XLSX, TXT), and more. Check our converter page for the full list.</p>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <h4>📱 Can I use ConverterPro on my phone?</h4>
+        <p>Yes! ConverterPro is fully mobile-responsive. You can convert files and build CVs from any device with a browser.</p>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <h4>⏱️ How long does conversion take?</h4>
+        <p>Most conversions complete instantly or within seconds. Large files (10MB+) may take up to 30 seconds.</p>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <h4>💡 Can I suggest a feature?</h4>
+        <p>Absolutely! We love feature requests. Email us at support@converterpro.com or send us a DM on Twitter with your idea.</p>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <h4>🤝 Are you interested in partnerships?</h4>
+        <p>Yes! If you'd like to integrate ConverterPro into your service or discuss a collaboration, reach out to us at support@converterpro.com.</p>
+      </div>
+    </div>
+
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/about" class="nav-link">About</a>
+      <a href="/privacy" class="nav-link">Privacy Policy</a>
+      <a href="/terms" class="nav-link">Terms of Service</a>
+    </div>
+
+    <div class="footer">
+      <p>&copy; 2024 ConverterPro. Built in Kenya. Privacy-first, always free.</p>
+    </div>
+  </div>
+
+  <script>
+    function toggleFaq(element) {
+      element.classList.toggle('open');
+    }
+
+    function handleSubmit(event) {
+      event.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const statusEl = document.getElementById('formStatus');
+      
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      
+      const formData = new FormData(document.getElementById('contactForm'));
+      
+      fetch('/submit-contact', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          statusEl.textContent = '✓ Message sent! We\'ll get back to you soon.';
+          statusEl.classList.add('success');
+          statusEl.classList.remove('error');
+          statusEl.style.display = 'block';
+          document.getElementById('contactForm').reset();
+        } else {
+          statusEl.textContent = '❌ Error: ' + (data.error || 'Failed to send message');
+          statusEl.classList.add('error');
+          statusEl.classList.remove('success');
+          statusEl.style.display = 'block';
+        }
+      })
+      .catch(err => {
+        statusEl.textContent = '❌ Network error: ' + err.message;
+        statusEl.classList.add('error');
+        statusEl.classList.remove('success');
+        statusEl.style.display = 'block';
+      })
+      .finally(() => {
+        btn.disabled = false;
+        btn.textContent = 'Send Message';
+      });
+    }
+  </script>
+</body>
+</html>

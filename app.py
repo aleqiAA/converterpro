@@ -709,5 +709,50 @@ def email_cv_route():
 def feature_status_route():
     return jsonify(feature_status())
 
+
+# ── REQUIRED PAGES (Google & AdSense) ────────────────────────────────────────
+
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
+@app.route("/contact", methods=["GET", "POST"])
+def contact():
+    return render_template("contact.html")
+
+@app.route("/submit-contact", methods=["POST"])
+def submit_contact():
+    try:
+        name    = sanitize_text(request.form.get("name", ""), 100)
+        email   = sanitize_text(request.form.get("email", ""), 200)
+        subject = sanitize_text(request.form.get("subject", ""), 200)
+        message = sanitize_text(request.form.get("message", ""), 5000)
+        if not all([name, email, subject, message]):
+            return jsonify({"error": "All fields are required."}), 400
+        if "@" not in email:
+            return jsonify({"error": "Valid email required."}), 400
+        logger.info(f"Contact form submission from {email} about {subject}")
+        return jsonify({"success": True})
+    except Exception as e:
+        logger.error(f"Contact form error: {e}")
+        return jsonify({"error": "Error submitting form. Please try again."}), 500
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+@app.route("/sitemap.xml")
+def sitemap():
+    return send_file("static/sitemap.xml", mimetype="application/xml")
+
+@app.route("/robots.txt")
+def robots():
+    return send_file("static/robots.txt", mimetype="text/plain")
+
+
 if __name__ == "__main__":
     app.run(debug=os.getenv("FLASK_ENV") != "production", host="0.0.0.0", port=5000)

@@ -1,0 +1,58 @@
+# ConverterPro robots.txt
+# Guides search engine crawlers on which pages to crawl and which to avoid
+
+# Allow all search engines to crawl public pages
+User-agent: *
+Allow: /
+Allow: /converter
+Allow: /merge
+Allow: /split
+Allow: /compress
+Allow: /rotate
+Allow: /delete-pages
+Allow: /extract-pages
+Allow: /add-watermark
+Allow: /builder
+Allow: /ats-check
+Allow: /cover-letter
+Allow: /about
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+
+# Disallow admin/sensitive routes (if you add them later)
+Disallow: /admin
+Disallow: /api
+Disallow: /settings
+Disallow: /user
+
+# Disallow common bot abuse patterns
+Disallow: /*?*sort=
+Disallow: /*?*page=
+Disallow: /search?
+
+# Specify crawl delay to be respectful of server resources
+Crawl-delay: 1
+
+# Point to sitemap for faster indexing
+Sitemap: https://web-production-5a9062.up.railway.app/sitemap.xml
+
+# Google-specific rules
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0.5
+
+# Bing-specific rules
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Disallow bad bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
